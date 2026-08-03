@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { Plus, ImageUp } from '@lucide/vue'
-import { createProduct, listProducts, listSpecs, uploadCertPhoto } from '../client'
+import { ImageUp, Pencil, Plus, Trash2 } from '@lucide/vue'
+import {
+  createProduct,
+  deleteProduct,
+  listProducts,
+  listSpecs,
+  updateProduct,
+  uploadCertPhoto,
+} from '../client'
 import type { ProductOut, SpecOut } from '../client'
 import { isSupervisor } from '../store'
 import Badge from '@/components/ui/Badge.vue'
@@ -14,6 +21,7 @@ import Select from '@/components/ui/Select.vue'
 const products = ref<ProductOut[]>([])
 const specs = ref<SpecOut[]>([])
 const dialogOpen = ref(false)
+const editingProduct = ref<ProductOut | null>(null) // null=新增模式
 const form = ref({ name: '', category: '', expected_marking: '' })
 const paramValues = ref<Record<string, string>>({})
 
@@ -63,25 +71,77 @@ async function load() {
   specs.value = specsResult.data ?? []
 }
 
-async function onCreate() {
-  if (!form.value.name || !form.value.category) {
-    toast.warning('請填寫型號名稱並選擇類別')
-    return
+function openCreate() {
+  editingProduct.value = null
+  form.value = { name: '', category: '', expected_marking: '' }
+  paramValues.value = {}
+  dialogOpen.value = true
+}
+
+function openEdit(product: ProductOut) {
+  editingProduct.value = product
+  form.value = {
+    name: product.name,
+    category: product.category,
+    expected_marking: product.expected_marking,
   }
+  paramValues.value = Object.fromEntries(
+    Object.entries(product.params).map(([k, v]) => [k, String(v)]),
+  )
+  dialogOpen.value = true
+}
+
+function collectParams(): Record<string, number> {
   const params: Record<string, number> = {}
   for (const [key, raw] of Object.entries(paramValues.value)) {
     const num = Number(raw)
     if (raw !== '' && !Number.isNaN(num)) params[key] = num
   }
-  const { error } = await createProduct({ body: { ...form.value, params } })
-  if (error) {
-    toast.error(String((error as any).detail ?? '建立失敗'))
+  return params
+}
+
+async function onSubmit() {
+  if (!form.value.name || !form.value.category) {
+    toast.warning('請填寫型號名稱並選擇類別')
     return
   }
-  toast.success('產品已建立')
+  const params = collectParams()
+  const { error } = editingProduct.value
+    ? await updateProduct({
+        path: { product_id: editingProduct.value.id },
+        body: { name: form.value.name, expected_marking: form.value.expected_marking, params },
+      })
+    : await createProduct({ body: { ...form.value, params } })
+  if (error) {
+    toast.error(String((error as any).detail ?? '儲存失敗'))
+    return
+  }
+  toast.success(editingProduct.value ? '產品已更新' : '產品已建立')
   dialogOpen.value = false
-  form.value = { name: '', category: '', expected_marking: '' }
-  paramValues.value = {}
+  await load()
+}
+
+async function onToggleActive(product: ProductOut) {
+  const { error } = await updateProduct({
+    path: { product_id: product.id },
+    body: { active: !product.active },
+  })
+  if (error) {
+    toast.error('操作失敗')
+    return
+  }
+  toast.success(product.active ? '已停用(不再出現在選單,歷史保留)' : '已重新啟用')
+  await load()
+}
+
+async function onDelete(product: ProductOut) {
+  if (!window.confirm(`確定刪除「${product.name}」?已被檢驗單引用的產品會被擋下。`)) return
+  const { error } = await deleteProduct({ path: { product_id: product.id } })
+  if (error) {
+    toast.error(String((error as any).detail ?? '刪除失敗'))
+    return
+  }
+  toast.success('已刪除')
   await load()
 }
 
@@ -114,7 +174,7 @@ onMounted(load)
           型號的標稱參數與主機板標示 — 檢驗時自動帶出,主檔更新不影響歷史檢驗單
         </p>
       </div>
-      <Button v-if="isSupervisor()" @click="dialogOpen = true"><Plus />新增產品</Button>
+      <Button v-if="isSupervisor()" @click="openCreate"><Plus />新增產品</Button>
     </div>
 
     <div v-for="[category, items] in grouped" :key="category" class="mb-6">
@@ -127,6 +187,7 @@ onMounted(load)
               <th class="px-5 py-3 font-medium">預期主機板標示</th>
               <th class="px-5 py-3 font-medium">參數</th>
               <th class="px-5 py-3 font-medium">認證照</th>
+              <th v-if="isSupervisor()" class="px-5 py-3 text-right font-medium">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -160,6 +221,30 @@ onMounted(load)
                   </Button>
                 </div>
               </td>
+              <td v-if="isSupervisor()" class="px-5 py-3.5">
+                <div class="flex items-center justify-end gap-1">
+                  <Button size="sm" variant="ghost" title="編輯" @click="openEdit(product)">
+                    <Pencil />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    :title="product.active ? '停用(選單隱藏,歷史保留)' : '重新啟用'"
+                    @click="onToggleActive(product)"
+                  >
+                    {{ product.active ? '停用' : '啟用' }}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    class="text-destructive hover:text-destructive"
+                    title="刪除(已被引用會被擋下)"
+                    @click="onDelete(product)"
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -170,16 +255,19 @@ onMounted(load)
       尚無產品,主管可點右上角「新增產品」
     </p>
 
-    <Dialog v-model:open="dialogOpen" title="新增產品">
+    <Dialog v-model:open="dialogOpen" :title="editingProduct ? '編輯產品' : '新增產品'">
       <div class="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
         <div class="space-y-1.5">
           <label class="text-sm font-medium">類別 <span class="text-destructive">*</span></label>
-          <Select v-model="form.category">
+          <Select v-model="form.category" :disabled="!!editingProduct">
             <option value="" disabled>請選擇(對應檢驗標準)</option>
             <option v-for="category in categories" :key="category" :value="category">
               {{ category }}
             </option>
           </Select>
+          <p v-if="editingProduct" class="text-xs text-muted-foreground">
+            類別不可修改(綁定檢驗標準);要換類別請建新產品
+          </p>
         </div>
         <div class="space-y-1.5">
           <label class="text-sm font-medium">型號名稱 <span class="text-destructive">*</span></label>
@@ -202,7 +290,7 @@ onMounted(load)
       </div>
       <template #footer>
         <Button variant="ghost" @click="dialogOpen = false">取消</Button>
-        <Button @click="onCreate">建立</Button>
+        <Button @click="onSubmit">{{ editingProduct ? '儲存' : '建立' }}</Button>
       </template>
     </Dialog>
   </div>

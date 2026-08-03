@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.auth.service import get_current_user, require_supervisor
 from app.config import settings
 from app.database import get_db
-from app.models import Product, ProductPhoto, SpecTemplate, User
+from app.models import ModelInspection, Product, ProductPhoto, SpecTemplate, User
 from app.photos.service import compress_image
 
 router = APIRouter(prefix="/api/products", tags=["products"])
@@ -23,6 +23,7 @@ class ProductCreate(BaseModel):
 
 
 class ProductUpdate(BaseModel):
+    name: str | None = None
     params: dict | None = None
     expected_marking: str | None = None
     active: bool | None = None
@@ -85,6 +86,10 @@ def update_product(
     product = db.get(Product, product_id)
     if product is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "產品不存在")
+    if body.name is not None and body.name != product.name:
+        if db.scalar(select(Product).where(Product.name == body.name)):
+            raise HTTPException(status.HTTP_409_CONFLICT, "同名產品已存在")
+        product.name = body.name
     if body.params is not None:
         product.params = body.params
     if body.expected_marking is not None:
@@ -93,6 +98,31 @@ def update_product(
         product.active = body.active
     db.commit()
     return product
+
+
+@router.delete("/{product_id}")
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    _supervisor: User = Depends(require_supervisor),
+) -> dict:
+    """刪除產品:已被檢驗單引用者不可刪(保護歷史紀錄),請改用停用。"""
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "產品不存在")
+    referenced = db.scalar(
+        select(ModelInspection.id).where(ModelInspection.product_id == product_id).limit(1)
+    )
+    if referenced is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "此產品已被檢驗單引用,不可刪除;請改用「停用」保留歷史紀錄",
+        )
+    for photo in product.cert_photos:
+        (settings.resolved_upload_dir / photo.filename).unlink(missing_ok=True)
+    db.delete(product)
+    db.commit()
+    return {"deleted": product_id}
 
 
 @router.post("/{product_id}/cert-photos", response_model=ProductPhotoOut)

@@ -307,6 +307,10 @@ export type ProductPhotoOut = {
  */
 export type ProductUpdate = {
     /**
+     * Name
+     */
+    name?: string | null;
+    /**
      * Params
      */
     params?: {
@@ -840,6 +844,40 @@ export type CreateProductResponses = {
 };
 
 export type CreateProductResponse = CreateProductResponses[keyof CreateProductResponses];
+
+export type DeleteProductData = {
+    body?: never;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: number;
+    };
+    query?: never;
+    url: '/api/products/{product_id}';
+};
+
+export type DeleteProductErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteProductError = DeleteProductErrors[keyof DeleteProductErrors];
+
+export type DeleteProductResponses = {
+    /**
+     * Response Delete Product
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DeleteProductResponse = DeleteProductResponses[keyof DeleteProductResponses];
 
 export type UpdateProductData = {
     body: ProductUpdate;

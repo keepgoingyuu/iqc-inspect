@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddModelData, AddModelErrors, AddModelResponses, AddSampleData, AddSampleErrors, AddSampleResponses, ApproveData, ApproveErrors, ApproveResponses, AuditTrailData, AuditTrailErrors, AuditTrailResponses, ChatData, ChatErrors, ChatResponses, ConfirmMarkingData, ConfirmMarkingErrors, ConfirmMarkingResponses, CreateProductData, CreateProductErrors, CreateProductResponses, CreateSheetData, CreateSheetErrors, CreateSheetResponses, CreateSpecData, CreateSpecErrors, CreateSpecResponses, ExportXlsxData, ExportXlsxErrors, ExportXlsxResponses, GetFileData, GetFileErrors, GetFileResponses, GetSheetData, GetSheetErrors, GetSheetResponses, GetSpecData, GetSpecErrors, GetSpecResponses, HealthData, HealthResponses, JudgeSheetData, JudgeSheetErrors, JudgeSheetResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSheetsData, ListSheetsErrors, ListSheetsResponses, ListSpecsData, ListSpecsErrors, ListSpecsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, MeData, MeErrors, MeResponses, RejectData, RejectErrors, RejectResponses, RunOcrData, RunOcrErrors, RunOcrResponses, TransitionSheetData, TransitionSheetErrors, TransitionSheetResponses, UpdateItemValuesData, UpdateItemValuesErrors, UpdateItemValuesResponses, UpdateProductData, UpdateProductErrors, UpdateProductResponses, UpdateSampleData, UpdateSampleErrors, UpdateSampleResponses, UploadCertPhotoData, UploadCertPhotoErrors, UploadCertPhotoResponses, UploadPdfData, UploadPdfErrors, UploadPdfResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { AddModelData, AddModelErrors, AddModelResponses, AddSampleData, AddSampleErrors, AddSampleResponses, ApproveData, ApproveErrors, ApproveResponses, AuditTrailData, AuditTrailErrors, AuditTrailResponses, ChatData, ChatErrors, ChatResponses, ConfirmMarkingData, ConfirmMarkingErrors, ConfirmMarkingResponses, CreateProductData, CreateProductErrors, CreateProductResponses, CreateSheetData, CreateSheetErrors, CreateSheetResponses, CreateSpecData, CreateSpecErrors, CreateSpecResponses, DeleteProductData, DeleteProductErrors, DeleteProductResponses, ExportXlsxData, ExportXlsxErrors, ExportXlsxResponses, GetFileData, GetFileErrors, GetFileResponses, GetSheetData, GetSheetErrors, GetSheetResponses, GetSpecData, GetSpecErrors, GetSpecResponses, HealthData, HealthResponses, JudgeSheetData, JudgeSheetErrors, JudgeSheetResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSheetsData, ListSheetsErrors, ListSheetsResponses, ListSpecsData, ListSpecsErrors, ListSpecsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, MeData, MeErrors, MeResponses, RejectData, RejectErrors, RejectResponses, RunOcrData, RunOcrErrors, RunOcrResponses, TransitionSheetData, TransitionSheetErrors, TransitionSheetResponses, UpdateItemValuesData, UpdateItemValuesErrors, UpdateItemValuesResponses, UpdateProductData, UpdateProductErrors, UpdateProductResponses, UpdateSampleData, UpdateSampleErrors, UpdateSampleResponses, UploadCertPhotoData, UploadCertPhotoErrors, UploadCertPhotoResponses, UploadPdfData, UploadPdfErrors, UploadPdfResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -92,6 +92,13 @@ export const createProduct = <ThrowOnError extends boolean = false>(options: Opt
         ...options.headers
     }
 });
+
+/**
+ * Delete Product
+ *
+ * 刪除產品:已被檢驗單引用者不可刪(保護歷史紀錄),請改用停用。
+ */
+export const deleteProduct = <ThrowOnError extends boolean = false>(options: Options<DeleteProductData, ThrowOnError>): RequestResult<DeleteProductResponses, DeleteProductErrors, ThrowOnError> => (options.client ?? client).delete<DeleteProductResponses, DeleteProductErrors, ThrowOnError>({ url: '/api/products/{product_id}', ...options });
 
 /**
  * Update Product
