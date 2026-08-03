@@ -123,23 +123,61 @@ LED 燈具進貨/出貨抽檢 · 2026-08-04
 
 # 檢驗流程:數位化後的完整動線
 
-```mermaid {scale: 0.42}
-flowchart LR
-    A([收到進貨通知]) --> B[建檢驗單<br/>選產品自動帶標準]
-    B --> C[匯入積分球 PDF<br/>自動解析數據]
-    C --> D[拍主機板標示照<br/>手機直接拍]
-    D --> E{系統自動判定}
-    E -- 不合格 --> F[🛡️ 強制二次拆檢<br/>第二件數據]
-    F --> G
-    E -- 合格 --> G[主管審核<br/>異常自動高亮]
-    G --> H{簽核}
-    H -- 通過 --> I[匯出 Excel 報表<br/>格式同紙本]
-    H -- 退件 --> J[開立異常單]
-    I --> K([結案歸檔])
-    J --> K
-```
+<div class="flex items-stretch gap-1.5 pt-10">
 
-<div class="mt-4 text-sm opacity-70">
+<div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">1</div>
+  <div class="text-sm font-semibold">建檢驗單</div>
+  <div class="mt-1 text-xs leading-snug opacity-60">選產品<br/>標準自動帶出</div>
+</div>
+<div class="flex items-center text-lg text-gray-500">›</div>
+
+<div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">2</div>
+  <div class="text-sm font-semibold">匯入積分球 PDF</div>
+  <div class="mt-1 text-xs leading-snug opacity-60">六項數據<br/>自動解析</div>
+</div>
+<div class="flex items-center text-lg text-gray-500">›</div>
+
+<div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">3</div>
+  <div class="text-sm font-semibold">拍標示照</div>
+  <div class="mt-1 text-xs leading-snug opacity-60">手機直接拍<br/>主機板特寫</div>
+</div>
+<div class="flex items-center text-lg text-gray-500">›</div>
+
+<div class="flex-1 rounded-xl border border-indigo-400/50 bg-indigo-500/10 p-3 text-center">
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/30 text-sm font-bold text-indigo-200">4</div>
+  <div class="text-sm font-semibold">系統自動判定</div>
+  <div class="mt-1 text-xs leading-snug opacity-60">超標即時<br/>紅框高亮</div>
+</div>
+<div class="flex items-center text-lg text-gray-500">›</div>
+
+<div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">5</div>
+  <div class="text-sm font-semibold">主管審核簽核</div>
+  <div class="mt-1 text-xs leading-snug opacity-60">比對標示<br/>異常已標好</div>
+</div>
+<div class="flex items-center text-lg text-gray-500">›</div>
+
+<div class="flex-1 rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-3 text-center">
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-emerald-500/25 text-sm font-bold text-emerald-300">6</div>
+  <div class="text-sm font-semibold">Excel 歸檔</div>
+  <div class="mt-1 text-xs leading-snug opacity-60">格式同紙本<br/>結案留痕</div>
+</div>
+
+</div>
+
+<div class="mt-5 grid grid-cols-2 gap-4 text-xs">
+<div class="rounded-lg border border-red-400/30 bg-red-500/5 p-3">
+  <b class="text-red-400">④ 判定不合格</b> → 🛡️ 系統強制二次拆檢(第二件數據)→ 完成後才准送審
+</div>
+<div class="rounded-lg border border-amber-400/30 bg-amber-500/5 p-3">
+  <b class="text-amber-400">⑤ 主管退件</b> → 自動開立不良品異常單 → 歸檔留痕
+</div>
+</div>
+
+<div class="mt-5 text-sm opacity-70">
 與現行紙本流程一一對應 — 檢驗員不用改變工作習慣,只是把紙換成畫面
 </div>
 
