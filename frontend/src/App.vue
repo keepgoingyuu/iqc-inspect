@@ -21,8 +21,14 @@ const route = useRoute()
 const isDark = ref(document.documentElement.classList.contains('dark'))
 const collapsed = ref(localStorage.getItem('sidebar') === 'collapsed')
 const hovered = ref(false)
-// 收合時滑鼠移入 → 暫時展開(推擠內容);移開縮回
-const expanded = computed(() => !collapsed.value || hovered.value)
+
+// 手機(<768px):側欄固定窄軌、無 hover 展開、助手全寬蓋板
+const mobileQuery = window.matchMedia('(max-width: 767px)')
+const isMobile = ref(mobileQuery.matches)
+mobileQuery.addEventListener('change', (e) => (isMobile.value = e.matches))
+
+// 收合時滑鼠移入 → 暫時展開(推擠內容);移開縮回;手機一律窄軌
+const expanded = computed(() => !isMobile.value && (!collapsed.value || hovered.value))
 
 const NAV_ITEMS = [
   { to: '/', label: '檢驗單', icon: ClipboardList, match: (p: string) => p === '/' || p.startsWith('/sheets') },
@@ -126,8 +132,11 @@ async function onLogout() {
 
     <!-- 頂部儀表板列 -->
     <header
-      class="fixed top-0 right-0 z-30 flex h-14 items-center gap-3 border-b bg-sidebar px-5 transition-[left,right] duration-200"
-      :class="[expanded ? 'left-56' : 'left-14', assistantOpen ? 'right-96' : 'right-0']"
+      class="fixed top-0 right-0 z-30 flex h-14 items-center gap-2 border-b bg-sidebar px-3 transition-[left,right] duration-200 md:gap-3 md:px-5"
+      :class="[
+        expanded ? 'left-56' : 'left-14',
+        assistantOpen && !isMobile ? 'right-96' : 'right-0',
+      ]"
     >
       <span class="text-sm font-semibold">
         {{ route.path === '/products' ? '產品主檔' : '檢驗單' }}
@@ -156,11 +165,11 @@ async function onLogout() {
         <Moon v-else class="size-4" />
       </button>
 
-      <span class="font-mono text-sm text-muted-foreground">{{ clock }}</span>
+      <span class="hidden font-mono text-sm text-muted-foreground lg:inline">{{ clock }}</span>
 
       <span
         v-if="currentUser"
-        class="rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success"
+        class="hidden rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success sm:inline"
       >
         {{ currentUser.display_name }}({{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }})
       </span>
@@ -171,14 +180,14 @@ async function onLogout() {
         @click="onLogout"
       >
         <LogOut class="size-4" />
-        登出
+        <span class="hidden sm:inline">登出</span>
       </button>
     </header>
 
-    <!-- 主內容:推擠式,左右都讓位 -->
+    <!-- 主內容:推擠式,左右都讓位(手機:助手改全寬蓋板) -->
     <main
-      class="flex-1 px-8 pb-6 pt-20 transition-[margin] duration-200"
-      :class="[expanded ? 'ml-56' : 'ml-14', assistantOpen ? 'mr-96' : 'mr-0']"
+      class="flex-1 px-4 pb-6 pt-20 transition-[margin] duration-200 md:px-8"
+      :class="[expanded ? 'ml-56' : 'ml-14', assistantOpen && !isMobile ? 'mr-96' : 'mr-0']"
     >
       <router-view />
     </main>

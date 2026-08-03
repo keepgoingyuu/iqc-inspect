@@ -388,7 +388,7 @@ onMounted(async () => {
 
       <!-- 檢驗項目(手動/勾選) -->
       <h3 class="mb-3 text-sm font-semibold text-muted-foreground">檢驗項目</h3>
-      <div class="mb-6 overflow-hidden rounded-lg border">
+      <div class="mb-6 overflow-x-auto rounded-lg border">
         <table class="w-full text-sm">
           <tbody>
             <tr

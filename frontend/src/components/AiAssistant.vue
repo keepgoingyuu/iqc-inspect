@@ -95,7 +95,7 @@ async function send(text?: string) {
   <transition name="drawer">
     <aside
       v-if="open"
-      class="fixed inset-y-0 right-0 z-40 flex w-96 flex-col border-l bg-sidebar text-sidebar-foreground"
+      class="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l bg-sidebar text-sidebar-foreground sm:w-96"
     >
       <!-- 標題列 -->
       <div class="flex items-center gap-2 border-b px-4 py-3">

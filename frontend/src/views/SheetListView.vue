@@ -53,7 +53,7 @@ onMounted(load)
       </Button>
     </div>
 
-    <div class="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <div class="overflow-x-auto rounded-xl border bg-card shadow-sm">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b bg-muted/50 text-left text-xs text-muted-foreground">
