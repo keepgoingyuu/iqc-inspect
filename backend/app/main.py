@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 
 from app.auth.router import router as auth_router
-from app.database import Base, engine
+from app.database import Base, SessionLocal, engine
 from app.export.router import router as export_router
 from app.inspections.router import router as inspections_router
 from app.photos.router import router as photos_router
@@ -16,10 +17,24 @@ from app.specs.router import router as specs_router
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 
+async def _photo_purge_loop() -> None:
+    from app.photos.service import purge_expired_photos
+
+    while True:
+        db = SessionLocal()
+        try:
+            purge_expired_photos(db)
+        finally:
+            db.close()
+        await asyncio.sleep(3600)  # 每小時掃一次
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(engine)  # MVP 以 create_all 建表;正式化後改 Alembic
+    purge_task = asyncio.create_task(_photo_purge_loop())
     yield
+    purge_task.cancel()
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:

@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     upload_dir: str = "./data/uploads"
     secret_key: str = "dev-only-insecure-key"
     port: int = 8000
+    # 照片保存時數:滿時數「且檢驗單已歸檔」才清除(避免審核前照片消失)
+    photo_retention_hours: int = 24
 
     @property
     def resolved_database_url(self) -> str:

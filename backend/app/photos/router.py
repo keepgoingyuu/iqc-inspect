@@ -12,6 +12,7 @@ from app.database import get_db
 from app.inspections.schemas import PhotoOut
 from app.inspections.state_machine import TransitionError, ensure_editable
 from app.models import Photo, Sample, User
+from app.photos.service import compress_image
 
 router = APIRouter(prefix="/api", tags=["photos"])
 
@@ -40,8 +41,10 @@ async def upload_photo(
     if suffix not in ALLOWED_SUFFIXES:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"不支援的圖片格式:{suffix}")
 
-    filename = f"photo_{sample_id}_{secrets.token_hex(4)}{suffix}"
-    (settings.resolved_upload_dir / filename).write_bytes(await file.read())
+    # 手機原圖自動壓縮(約 5MB → 0.3MB);無法辨識的格式原樣保留
+    data, new_suffix = compress_image(await file.read())
+    filename = f"photo_{sample_id}_{secrets.token_hex(4)}{new_suffix or suffix}"
+    (settings.resolved_upload_dir / filename).write_bytes(data)
 
     photo = Photo(sample_id=sample_id, kind=kind, filename=filename)
     db.add(photo)
