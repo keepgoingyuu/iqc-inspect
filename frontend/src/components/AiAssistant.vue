@@ -156,9 +156,9 @@ async function send(text?: string) {
           </div>
         </div>
 
-        <div v-if="loading" class="flex items-center gap-2 text-sm text-muted-foreground">
-          <span class="inline-block size-2 animate-pulse rounded-full bg-primary"></span>
-          {{ thinkingText }}
+        <div v-if="loading" class="flex items-center gap-2 text-sm">
+          <span class="shimmer-dot inline-block size-2 rounded-full"></span>
+          <span class="shimmer-text font-medium">{{ thinkingText }}</span>
         </div>
 
         <!-- 底部墊高:讓最新 query 能被捲到頂 -->
@@ -193,5 +193,34 @@ async function send(text?: string) {
 .drawer-enter-from,
 .drawer-leave-to {
   transform: translateX(100%);
+}
+
+/* 等待文字:彩色漸層流動(Apple Intelligence 風) */
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #6366f1,
+    #a855f7,
+    #ec4899,
+    #f59e0b,
+    #22c55e,
+    #06b6d4,
+    #6366f1
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-flow 2.5s linear infinite;
+}
+.shimmer-dot {
+  background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #f59e0b, #6366f1);
+  background-size: 300% 100%;
+  animation: shimmer-flow 2.5s linear infinite;
+}
+@keyframes shimmer-flow {
+  to {
+    background-position: -300% 0;
+  }
 }
 </style>
