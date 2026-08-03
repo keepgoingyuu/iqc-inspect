@@ -109,7 +109,7 @@ async function onLogout() {
         <div
           v-if="currentUser"
           class="flex items-center gap-2"
-          :class="!expanded ? 'flex-col' : 'px-1'"
+          :class="!expanded ? 'justify-center' : 'px-1'"
         >
           <div
             class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold"
@@ -117,27 +117,29 @@ async function onLogout() {
           >
             {{ currentUser.display_name.slice(0, 1) }}
           </div>
-          <div v-if="expanded" class="min-w-0 flex-1">
-            <div class="truncate text-sm font-medium">{{ currentUser.display_name }}</div>
-            <div class="text-[11px] text-muted-foreground">
-              {{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }}
+          <template v-if="expanded">
+            <div class="min-w-0 flex-1">
+              <div class="truncate text-sm font-medium">{{ currentUser.display_name }}</div>
+              <div class="text-[11px] text-muted-foreground">
+                {{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }}
+              </div>
             </div>
-          </div>
-          <button
-            class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-            title="切換主題"
-            @click="toggleTheme"
-          >
-            <Sun v-if="isDark" class="size-4" />
-            <Moon v-else class="size-4" />
-          </button>
-          <button
-            class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive cursor-pointer"
-            title="登出"
-            @click="onLogout"
-          >
-            <LogOut class="size-4" />
-          </button>
+            <button
+              class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+              title="切換主題"
+              @click="toggleTheme"
+            >
+              <Sun v-if="isDark" class="size-4" />
+              <Moon v-else class="size-4" />
+            </button>
+            <button
+              class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive cursor-pointer"
+              title="登出"
+              @click="onLogout"
+            >
+              <LogOut class="size-4" />
+            </button>
+          </template>
         </div>
       </div>
     </aside>
