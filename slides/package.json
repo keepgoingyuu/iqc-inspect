@@ -1,0 +1,13 @@
+{
+  "name": "iqc-inspect-slides",
+  "private": true,
+  "scripts": {
+    "dev": "slidev slides.md --port 3032",
+    "build": "slidev build slides.md",
+    "export": "slidev export slides.md"
+  },
+  "devDependencies": {
+    "@slidev/cli": "latest",
+    "@slidev/theme-seriph": "latest"
+  }
+}
