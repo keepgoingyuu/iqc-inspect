@@ -320,7 +320,7 @@ backgroundSize: contain
 
 # 下一步
 
-<div class="pt-4">
+<div class="text-sm">
 
 | 順序 | 項目 | 說明 |
 |------|------|------|
@@ -331,11 +331,11 @@ backgroundSize: contain
 
 </div>
 
-<div class="mt-6 grid grid-cols-2 gap-4 text-sm">
-<div class="rounded-lg bg-green-500/10 p-4 text-green-400">
+<div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+<div class="rounded-lg bg-green-500/10 p-3 text-green-400">
 系統本體已完成並上線 — 剩下的是資料遷移與交付,不是開發風險
 </div>
-<div class="rounded-lg bg-blue-500/10 p-4 text-blue-400">
+<div class="rounded-lg bg-blue-500/10 p-3 text-blue-400">
 <b>需要的支援</b>:公司報表 Excel 模板、30 份檢驗標準檔案、正式部署主機
 </div>
 </div>
