@@ -20,7 +20,21 @@ const listEl = ref<HTMLElement | null>(null)
 // 底部墊高:讓最新 query 有空間被推到可視區頂端(同 ChatGPT 做法)
 const spacerHeight = ref(0)
 
-const THINKING_TEXT = '正在為您整理回覆…'
+const THINKING_PHRASES = [
+  '正在為您整理回覆…',
+  '正在分析您的問題…',
+  '正在查閱檢驗數據…',
+  '正在核對相關資料…',
+  '正在彙整重點…',
+  '正在確認細節…',
+  '正在組織回答…',
+  '正在檢視這張檢驗單…',
+  '正在比對標準範圍…',
+  '正在整理判定依據…',
+  '稍候片刻,即將完成…',
+  '正在為您找出關鍵資訊…',
+]
+const thinkingText = ref(THINKING_PHRASES[0])
 
 // 在檢驗單頁時,把該單數據帶給助手當上下文
 const sheetId = computed(() =>
@@ -54,6 +68,7 @@ async function send(text?: string) {
   if (!content || loading.value) return
   input.value = ''
   messages.value.push({ role: 'user', content })
+  thinkingText.value = THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]!
   loading.value = true
   await scrollQueryToTop()
   try {
@@ -143,7 +158,7 @@ async function send(text?: string) {
 
         <div v-if="loading" class="flex items-center gap-2 text-sm text-muted-foreground">
           <span class="inline-block size-2 animate-pulse rounded-full bg-primary"></span>
-          {{ THINKING_TEXT }}
+          {{ thinkingText }}
         </div>
 
         <!-- 底部墊高:讓最新 query 能被捲到頂 -->
