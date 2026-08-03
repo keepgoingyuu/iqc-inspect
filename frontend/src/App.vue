@@ -7,7 +7,7 @@ import {
   LogOut,
   Moon,
   Package,
-  PanelLeftOpen,
+  Pin,
   ShieldCheck,
   Sun,
 } from '@lucide/vue'
@@ -83,7 +83,7 @@ async function onLogout() {
           :title="collapsed ? '釘選展開(固定不縮回)' : '取消釘選(自動縮回)'"
           @click="toggleSidebar"
         >
-          <PanelLeftOpen class="size-4" />
+          <Pin class="size-4" />
         </button>
       </div>
 
