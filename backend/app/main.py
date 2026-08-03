@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 
@@ -65,6 +66,14 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-# 前端打包產物由後端直接掛載 → 單一服務,內網瀏覽器直接使用
+# 前端打包產物由後端直接掛載 → 單一服務;SPA fallback 讓 /sheets/1 這類深層連結
+# 重新整理時也能拿到 index.html(交給前端路由),而非 404
 if FRONTEND_DIST.is_dir():
-    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str) -> FileResponse:
+        candidate = FRONTEND_DIST / full_path
+        if full_path and ".." not in full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")
