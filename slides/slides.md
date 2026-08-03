@@ -1,6 +1,5 @@
 ---
 theme: seriph
-background: https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920
 title: IQC 進貨抽檢系統
 class: text-center
 highlighter: shiki
@@ -8,18 +7,35 @@ drawings:
   persist: false
 transition: slide-left
 mdc: true
+background: none
 ---
 
-# IQC 進貨抽檢系統
+<div class="absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.25), transparent), radial-gradient(ellipse 60% 50% at 80% 110%, rgba(34,197,94,0.12), transparent), #0b0d12;"></div>
 
-## 紙本檢驗流程數位化
+<div class="absolute inset-0 opacity-[0.05]" style="background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px); background-size: 48px 48px;"></div>
 
-<div class="pt-8 text-lg opacity-80">
-LED 燈具進貨/出貨抽檢 — 從手抄表單到智慧檢驗
+<div class="relative flex h-full flex-col items-center justify-center">
+
+<div class="mb-6 flex size-16 items-center justify-center rounded-2xl shadow-2xl" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+  <carbon-security class="text-3xl text-white" />
 </div>
 
-<div class="abs-br m-6 text-sm opacity-50">
-2026-08-04
+<h1 class="!text-5xl !font-bold tracking-tight">
+  IQC 進貨抽檢系統
+</h1>
+
+<p class="mt-3 text-xl opacity-70">紙本檢驗流程數位化</p>
+
+<div class="mt-8 flex gap-3 text-sm">
+  <span class="rounded-full border border-indigo-400/40 bg-indigo-500/10 px-4 py-1.5 text-indigo-300">自動判定</span>
+  <span class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-emerald-300">三道防呆</span>
+  <span class="rounded-full border border-amber-400/40 bg-amber-500/10 px-4 py-1.5 text-amber-300">AI 輔助比對</span>
+</div>
+
+<div class="mt-12 text-sm opacity-40">
+LED 燈具進貨/出貨抽檢 · 2026-08-04
+</div>
+
 </div>
 
 <!--
