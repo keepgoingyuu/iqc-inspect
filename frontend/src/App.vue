@@ -135,16 +135,16 @@ async function onLogout() {
       <div class="flex-1"></div>
 
       <button
-        class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer"
+        class="rounded-full p-2 transition-colors cursor-pointer"
         :class="
           assistantOpen
             ? 'bg-primary text-primary-foreground'
             : 'bg-primary/15 text-primary hover:bg-primary/25'
         "
+        title="AI 助手"
         @click="assistantOpen = !assistantOpen"
       >
         <Bot class="size-4" />
-        AI 助手
       </button>
 
       <button
