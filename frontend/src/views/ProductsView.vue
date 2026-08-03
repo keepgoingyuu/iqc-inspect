@@ -39,6 +39,21 @@ const PARAM_LABELS: Record<string, string> = {
 }
 const paramLabel = (key: string) => PARAM_LABELS[key] ?? key
 
+// 列表徽章用的精簡標籤
+const PARAM_SHORT: Record<string, string> = {
+  nominal_power: '功率',
+  cct_nominal: '色溫',
+  cct_min: '色溫下限',
+  cct_max: '色溫上限',
+  flux_min: '光通量下限',
+  flux_max: '光通量上限',
+  efficacy_min: '光效下限',
+  efficacy_max: '光效上限',
+  net_weight_nominal: '淨重',
+  box_weight_nominal: '外箱',
+}
+const paramShort = (key: string) => PARAM_SHORT[key] ?? key
+
 const categories = computed(() => [...new Set(specs.value.map((s) => s.product_category))])
 
 // 從所選類別的標準公式裡,抽出需要填的參數欄位
@@ -199,8 +214,18 @@ onMounted(load)
               <td class="px-5 py-3.5 font-mono text-xs">
                 {{ product.expected_marking || '—' }}
               </td>
-              <td class="px-5 py-3.5 text-xs text-muted-foreground">
-                {{ Object.entries(product.params).map(([k, v]) => `${paramLabel(k)}=${v}`).join('、') || '—' }}
+              <td class="px-5 py-3.5">
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="[key, value] in Object.entries(product.params)"
+                    :key="key"
+                    class="rounded-md bg-muted px-2 py-0.5 text-xs whitespace-nowrap"
+                    :title="paramLabel(key)"
+                  >
+                    {{ paramShort(key) }} <b>{{ value }}</b>
+                  </span>
+                  <span v-if="!Object.keys(product.params).length" class="text-xs text-muted-foreground">—</span>
+                </div>
               </td>
               <td class="px-5 py-3.5">
                 <div class="flex items-center gap-2">
@@ -210,8 +235,12 @@ onMounted(load)
                     :src="`/api/files/${photo.filename}`"
                     class="h-10 w-10 rounded border object-cover"
                   />
+                  <span v-if="!product.cert_photos?.length" class="text-xs text-muted-foreground">—</span>
+                </div>
+              </td>
+              <td v-if="isSupervisor()" class="px-5 py-3.5">
+                <div class="flex items-center justify-end gap-1">
                   <Button
-                    v-if="isSupervisor()"
                     size="sm"
                     variant="ghost"
                     title="上傳認證照(選填)"
@@ -219,10 +248,6 @@ onMounted(load)
                   >
                     <ImageUp />
                   </Button>
-                </div>
-              </td>
-              <td v-if="isSupervisor()" class="px-5 py-3.5">
-                <div class="flex items-center justify-end gap-1">
                   <Button size="sm" variant="ghost" title="編輯" @click="openEdit(product)">
                     <Pencil />
                   </Button>
