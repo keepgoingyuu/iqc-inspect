@@ -14,7 +14,9 @@ import Input from '@/components/ui/Input.vue'
 const router = useRouter()
 const sheets = ref<SheetListItem[]>([])
 const dialogOpen = ref(false)
-const form = ref({ container_no: '', seal_no: '', unstuffing_date: '', qc_date: '' })
+// 'sv' locale 輸出 YYYY-MM-DD(本地時區,避免 toISOString 的 UTC 偏移)
+const today = () => new Date().toLocaleDateString('sv')
+const form = ref({ container_no: '', seal_no: '', unstuffing_date: '', qc_date: today() })
 
 async function load() {
   const { data } = await listSheets()
@@ -97,11 +99,11 @@ onMounted(load)
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1.5">
             <label class="text-sm font-medium">拆櫃日期</label>
-            <Input v-model="form.unstuffing_date" placeholder="YYYY-MM-DD" />
+            <Input v-model="form.unstuffing_date" type="date" />
           </div>
           <div class="space-y-1.5">
             <label class="text-sm font-medium">QC 日期</label>
-            <Input v-model="form.qc_date" placeholder="YYYY-MM-DD" />
+            <Input v-model="form.qc_date" type="date" />
           </div>
         </div>
       </div>
