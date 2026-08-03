@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { ImageUp, Pencil, Plus, Trash2 } from '@lucide/vue'
+import { ImageUp, Plus } from '@lucide/vue'
 import {
   createProduct,
   deleteProduct,
@@ -16,6 +16,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Input from '@/components/ui/Input.vue'
+import RowMenu from '@/components/ui/RowMenu.vue'
 import Select from '@/components/ui/Select.vue'
 
 const products = ref<ProductOut[]>([])
@@ -173,6 +174,10 @@ function pickCertPhoto(product: ProductOut) {
     if (error) toast.error('認證照上傳失敗')
     else toast.success('認證照已上傳')
     await load()
+    // 編輯對話框開著時,同步刷新裡面的縮圖
+    if (editingProduct.value) {
+      editingProduct.value = products.value.find((p) => p.id === editingProduct.value!.id) ?? null
+    }
   }
   input.click()
 }
@@ -202,7 +207,7 @@ onMounted(load)
               <th class="px-5 py-3 font-medium">預期主機板標示</th>
               <th class="px-5 py-3 font-medium">參數</th>
               <th class="w-24 whitespace-nowrap px-5 py-3 font-medium">認證照</th>
-              <th v-if="isSupervisor()" class="w-40 whitespace-nowrap px-5 py-3 text-right font-medium">操作</th>
+              <th v-if="isSupervisor()" class="w-16 whitespace-nowrap px-5 py-3 text-right font-medium">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -239,35 +244,22 @@ onMounted(load)
                 </div>
               </td>
               <td v-if="isSupervisor()" class="px-5 py-3.5">
-                <div class="flex items-center justify-end gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="上傳認證照(選填)"
-                    @click="pickCertPhoto(product)"
-                  >
-                    <ImageUp />
-                  </Button>
-                  <Button size="sm" variant="ghost" title="編輯" @click="openEdit(product)">
-                    <Pencil />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    :title="product.active ? '停用(選單隱藏,歷史保留)' : '重新啟用'"
-                    @click="onToggleActive(product)"
-                  >
-                    {{ product.active ? '停用' : '啟用' }}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    class="text-destructive hover:text-destructive"
-                    title="刪除(已被引用會被擋下)"
-                    @click="onDelete(product)"
-                  >
-                    <Trash2 />
-                  </Button>
+                <div class="flex justify-end">
+                  <RowMenu
+                    :items="[
+                      { key: 'edit', label: '編輯' },
+                      { key: 'toggle', label: product.active ? '停用' : '重新啟用' },
+                      { key: 'delete', label: '刪除', destructive: true },
+                    ]"
+                    @select="
+                      (key: string) =>
+                        key === 'edit'
+                          ? openEdit(product)
+                          : key === 'toggle'
+                            ? onToggleActive(product)
+                            : onDelete(product)
+                    "
+                  />
                 </div>
               </td>
             </tr>
@@ -312,6 +304,22 @@ onMounted(load)
             </div>
           </div>
         </template>
+
+        <!-- 認證照管理(編輯模式) -->
+        <div v-if="editingProduct" class="space-y-2 border-t pt-3">
+          <p class="text-sm font-medium">認證照(選填)</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <img
+              v-for="photo in editingProduct.cert_photos"
+              :key="photo.id"
+              :src="`/api/files/${photo.filename}`"
+              class="h-16 w-16 rounded-md border object-cover"
+            />
+            <Button size="sm" variant="outline" @click="pickCertPhoto(editingProduct)">
+              <ImageUp />上傳
+            </Button>
+          </div>
+        </div>
       </div>
       <template #footer>
         <Button variant="ghost" @click="dialogOpen = false">取消</Button>
