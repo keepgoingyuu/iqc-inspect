@@ -201,8 +201,8 @@ onMounted(load)
               <th class="px-5 py-3 font-medium">型號</th>
               <th class="px-5 py-3 font-medium">預期主機板標示</th>
               <th class="px-5 py-3 font-medium">參數</th>
-              <th class="px-5 py-3 font-medium">認證照</th>
-              <th v-if="isSupervisor()" class="px-5 py-3 text-right font-medium">操作</th>
+              <th class="w-24 whitespace-nowrap px-5 py-3 font-medium">認證照</th>
+              <th v-if="isSupervisor()" class="w-40 whitespace-nowrap px-5 py-3 text-right font-medium">操作</th>
             </tr>
           </thead>
           <tbody>
