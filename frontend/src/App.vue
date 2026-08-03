@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import {
@@ -19,6 +19,9 @@ const router = useRouter()
 const route = useRoute()
 const isDark = ref(document.documentElement.classList.contains('dark'))
 const collapsed = ref(localStorage.getItem('sidebar') === 'collapsed')
+const hovered = ref(false)
+// 收合時滑鼠移入 → 暫時浮出展開(不推擠內容);移開縮回
+const expanded = computed(() => !collapsed.value || hovered.value)
 
 const NAV_ITEMS = [
   { to: '/', label: '檢驗單', icon: ClipboardList, match: (p: string) => p === '/' || p.startsWith('/sheets') },
@@ -55,37 +58,29 @@ async function onLogout() {
     <!-- 側邊欄(可收合,仿 Cloudflare) -->
     <aside
       class="fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-sidebar text-sidebar-foreground transition-[width] duration-200"
-      :class="collapsed ? 'w-14' : 'w-56'"
+      :class="[expanded ? 'w-56' : 'w-14', collapsed && hovered && 'shadow-2xl shadow-black/40']"
+      @mouseenter="hovered = true"
+      @mouseleave="hovered = false"
     >
-      <!-- 品牌列 + 收合鈕 -->
-      <div class="flex items-center gap-2.5 px-3 py-4" :class="collapsed && 'justify-center'">
+      <!-- 品牌列 + 收合/釘選鈕 -->
+      <div class="flex items-center gap-2.5 px-3 py-4" :class="!expanded && 'justify-center'">
         <div
           class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
         >
           <ShieldCheck class="size-4.5" />
         </div>
-        <div v-if="!collapsed" class="min-w-0 flex-1">
+        <div v-if="expanded" class="min-w-0 flex-1">
           <div class="truncate text-sm font-semibold leading-tight">IQC 進貨抽檢</div>
           <div class="text-[11px] text-muted-foreground">品質檢驗系統</div>
         </div>
         <button
-          v-if="!collapsed"
+          v-if="expanded"
           class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-          title="收合側邊欄"
+          :title="collapsed ? '釘選展開' : '收合側邊欄'"
           @click="toggleSidebar"
         >
-          <PanelLeftClose class="size-4" />
-        </button>
-      </div>
-
-      <!-- 收合狀態的展開鈕 -->
-      <div v-if="collapsed" class="flex justify-center pb-2">
-        <button
-          class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-          title="展開側邊欄"
-          @click="toggleSidebar"
-        >
-          <PanelLeftOpen class="size-4" />
+          <PanelLeftOpen v-if="collapsed" class="size-4" />
+          <PanelLeftClose v-else class="size-4" />
         </button>
       </div>
 
@@ -95,17 +90,17 @@ async function onLogout() {
           v-for="item in NAV_ITEMS"
           :key="item.to"
           :to="item.to"
-          :title="collapsed ? item.label : undefined"
+          :title="!expanded ? item.label : undefined"
           class="flex items-center gap-2.5 rounded-md py-2 text-sm font-medium transition-colors"
           :class="[
-            collapsed ? 'justify-center px-0' : 'px-3',
+            !expanded ? 'justify-center px-0' : 'px-3',
             item.match(route.path)
               ? 'bg-accent text-accent-foreground'
               : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
           ]"
         >
           <component :is="item.icon" class="size-4 shrink-0" />
-          <span v-if="!collapsed">{{ item.label }}</span>
+          <span v-if="expanded">{{ item.label }}</span>
         </router-link>
       </nav>
 
@@ -114,7 +109,7 @@ async function onLogout() {
         <div
           v-if="currentUser"
           class="flex items-center gap-2"
-          :class="collapsed ? 'flex-col' : 'px-1'"
+          :class="!expanded ? 'flex-col' : 'px-1'"
         >
           <div
             class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold"
@@ -122,7 +117,7 @@ async function onLogout() {
           >
             {{ currentUser.display_name.slice(0, 1) }}
           </div>
-          <div v-if="!collapsed" class="min-w-0 flex-1">
+          <div v-if="expanded" class="min-w-0 flex-1">
             <div class="truncate text-sm font-medium">{{ currentUser.display_name }}</div>
             <div class="text-[11px] text-muted-foreground">
               {{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }}
