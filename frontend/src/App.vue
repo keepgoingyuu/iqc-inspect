@@ -108,6 +108,21 @@ async function onLogout() {
           <component :is="item.icon" class="size-4 shrink-0" />
           <span v-if="expanded">{{ item.label }}</span>
         </router-link>
+
+        <button
+          :title="!expanded ? 'AI 助手' : undefined"
+          class="flex w-full items-center gap-2.5 rounded-md py-2 text-sm font-medium transition-colors cursor-pointer"
+          :class="[
+            !expanded ? 'justify-center px-0' : 'px-3',
+            assistantOpen
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+          ]"
+          @click="assistantOpen = !assistantOpen"
+        >
+          <Bot class="size-4 shrink-0" />
+          <span v-if="expanded">AI 助手</span>
+        </button>
       </nav>
 
       <!-- 使用者區 -->
@@ -151,23 +166,14 @@ async function onLogout() {
     </aside>
 
     <!-- 主內容 -->
-    <!-- 推擠式:hover 展開時內容跟著讓位,不被遮住 -->
+    <!-- 推擠式:側欄/助手展開時內容跟著讓位,不被遮住 -->
     <main
       class="flex-1 px-8 py-6 transition-[margin] duration-200"
-      :class="expanded ? 'ml-56' : 'ml-14'"
+      :class="[expanded ? 'ml-56' : 'ml-14', assistantOpen ? 'mr-96' : 'mr-0']"
     >
       <router-view />
     </main>
 
-    <!-- AI 助手:右上浮動開關 + 右側抽屜 -->
-    <button
-      v-if="!assistantOpen"
-      class="fixed right-5 top-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg transition-transform hover:scale-105 cursor-pointer"
-      @click="assistantOpen = true"
-    >
-      <Bot class="size-4" />
-      AI 助手
-    </button>
     <AiAssistant v-model:open="assistantOpen" />
   </div>
 </template>
