@@ -12,9 +12,16 @@ export const STATUS_LABELS: Record<string, string> = {
 
 export const statusLabel = (status: string) => STATUS_LABELS[status] ?? status
 
-export function statusTagType(
-  status: string,
-): 'primary' | 'success' | 'warning' | 'danger' | 'info' {
+export type BadgeVariant =
+  | 'default'
+  | 'secondary'
+  | 'outline'
+  | 'success'
+  | 'warning'
+  | 'destructive'
+  | 'muted'
+
+export function statusVariant(status: string): BadgeVariant {
   switch (status) {
     case 'approved':
       return 'success'
@@ -23,11 +30,11 @@ export function statusTagType(
       return 'warning'
     case 'rejected':
     case 'defect_ticket':
-      return 'danger'
+      return 'destructive'
     case 'archived':
-      return 'info'
+      return 'muted'
     default:
-      return 'primary'
+      return 'secondary'
   }
 }
 
@@ -35,4 +42,8 @@ export const RESULT_LABELS: Record<string, string> = {
   pending: '未判定',
   pass: '合格',
   fail: '不合格',
+}
+
+export function resultVariant(result: string): BadgeVariant {
+  return result === 'pass' ? 'success' : result === 'fail' ? 'destructive' : 'muted'
 }

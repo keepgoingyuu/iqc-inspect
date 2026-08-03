@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { toast } from 'vue-sonner'
+import {
+  AlertTriangle,
+  Camera,
+  CheckCircle2,
+  FileSpreadsheet,
+  FileUp,
+  Plus,
+  Scale,
+} from '@lucide/vue'
 import {
   addModel,
   addSample,
@@ -18,17 +27,26 @@ import {
 } from '../client'
 import type { ModelOut, SampleOut, SheetOut, SpecOut } from '../client'
 import { isSupervisor } from '../store'
-import { RESULT_LABELS, statusLabel, statusTagType } from '../status'
+import { RESULT_LABELS, resultVariant, statusLabel, statusVariant } from '../status'
+import Badge from '@/components/ui/Badge.vue'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Dialog from '@/components/ui/Dialog.vue'
+import Input from '@/components/ui/Input.vue'
+import OkNgToggle from '@/components/ui/OkNgToggle.vue'
+import Select from '@/components/ui/Select.vue'
 
 const route = useRoute()
 const sheetId = Number(route.params.id)
 const sheet = ref<SheetOut | null>(null)
 const specs = ref<SpecOut[]>([])
-const addModelVisible = ref(false)
+const addModelOpen = ref(false)
 const modelForm = ref({ spec_template_id: 0, product_name: '', batch_code: '' })
 
 const editable = computed(
-  () => sheet.value && !['approved', 'rejected', 'defect_ticket', 'archived'].includes(sheet.value.status),
+  () =>
+    sheet.value &&
+    !['approved', 'rejected', 'defect_ticket', 'archived'].includes(sheet.value.status),
 )
 
 async function load() {
@@ -36,95 +54,99 @@ async function load() {
   sheet.value = data ?? null
 }
 
-function specOf(mi: ModelOut): SpecOut | undefined {
-  return specs.value.find((s) => s.id === mi.spec_template_id)
-}
-
-function itemsOf(mi: ModelOut): any[] {
-  return (specOf(mi)?.items ?? []) as any[]
-}
+const specOf = (mi: ModelOut) => specs.value.find((s) => s.id === mi.spec_template_id)
+const itemsOf = (mi: ModelOut) => (specOf(mi)?.items ?? []) as any[]
+const manualItems = (mi: ModelOut) =>
+  itemsOf(mi).filter((i: any) => !['auto', 'pdf'].includes(i.source_type))
+const pdfItems = (mi: ModelOut) => itemsOf(mi).filter((i: any) => i.source_type === 'pdf')
 
 function isHighlighted(mi: ModelOut, key: string, seq?: number): boolean {
   const highlights = (mi.judgement as any)?.highlights ?? []
-  return highlights.some(
-    (h: any) => h.item === key && (seq === undefined || h.sample === seq),
-  )
+  return highlights.some((h: any) => h.item === key && (seq === undefined || h.sample === seq))
 }
+
+function highlightReason(mi: ModelOut, key: string, seq?: number): string {
+  const highlights = (mi.judgement as any)?.highlights ?? []
+  const hit = highlights.find((h: any) => h.item === key && (seq === undefined || h.sample === seq))
+  return hit?.reason ?? ''
+}
+
+const errDetail = (error: unknown, fallback: string) =>
+  String((error as any)?.detail ?? fallback)
 
 async function onAddModel() {
   if (!modelForm.value.spec_template_id || !modelForm.value.product_name) {
-    ElMessage.warning('請選擇檢驗標準並輸入產品名稱')
+    toast.warning('請選擇檢驗標準並輸入產品名稱')
     return
   }
   const { error } = await addModel({ path: { sheet_id: sheetId }, body: modelForm.value })
   if (error) {
-    ElMessage.error(String((error as any).detail ?? '新增失敗'))
+    toast.error(errDetail(error, '新增失敗'))
     return
   }
-  addModelVisible.value = false
+  addModelOpen.value = false
+  modelForm.value = { spec_template_id: 0, product_name: '', batch_code: '' }
   await load()
 }
 
-async function onValueChange(mi: ModelOut, key: string, value: string | number) {
+async function onValueChange(mi: ModelOut, key: string, value: string | number | undefined) {
+  if (value === undefined) return
   await updateItemValues({ path: { model_id: mi.id }, body: { item_values: { [key]: value } } })
 }
 
 async function onAddSample(mi: ModelOut) {
   const nextSeq = Math.max(0, ...mi.samples!.map((s) => s.seq)) + 1
   const { error } = await addSample({ path: { model_id: mi.id }, body: { seq: nextSeq } })
-  if (error) ElMessage.error(String((error as any).detail ?? '新增樣品失敗'))
+  if (error) toast.error(errDetail(error, '新增樣品失敗'))
   await load()
 }
 
 async function onUploadPdf(sample: SampleOut, file: File) {
-  const { data, error } = await uploadPdf({
-    path: { sample_id: sample.id },
-    body: { file },
-  })
+  const { data, error } = await uploadPdf({ path: { sample_id: sample.id }, body: { file } })
   if (error || !data) {
-    ElMessage.error(String((error as any)?.detail ?? 'PDF 解析失敗'))
+    toast.error(errDetail(error, 'PDF 解析失敗'))
     return
   }
   if (!data.has_text_layer) {
-    ElMessage.warning('此 PDF 無文字層(圖片型),請人工輸入數據')
+    toast.warning('此 PDF 無文字層(圖片型),請人工輸入數據')
   } else if (data.missing.length) {
-    ElMessage.warning(`部分欄位未解析到:${data.missing.join(', ')},請人工補填後確認`)
+    toast.warning(`部分欄位未解析到:${data.missing.join(', ')},請人工補填後確認`)
   } else {
-    ElMessage.success('解析完成,請核對數值後按「確認數據」')
+    toast.success('解析完成,請核對數值後按「確認數據」')
   }
   await load()
 }
 
-async function onPhotometricChange(sample: SampleOut, key: string, value: string) {
+async function onPhotometricChange(sample: SampleOut, key: string, value: string | number | undefined) {
   const num = Number(value)
-  if (Number.isNaN(num)) return
+  if (value === undefined || Number.isNaN(num)) return
   await updateSample({ path: { sample_id: sample.id }, body: { photometric: { [key]: num } } })
 }
 
 async function onConfirmSample(sample: SampleOut) {
   await updateSample({ path: { sample_id: sample.id }, body: { confirmed: true } })
-  ElMessage.success(`第 ${sample.seq} 件數據已確認`)
+  toast.success(`第 ${sample.seq} 件數據已確認`)
   await load()
 }
 
-async function onUploadPhoto(sample: SampleOut, file: File, kind: 'part' | 'certified') {
+async function onUploadPhoto(sample: SampleOut, file: File) {
   const { error } = await uploadPhoto({
     path: { sample_id: sample.id },
-    query: { kind },
+    query: { kind: 'part' },
     body: { file },
   })
-  if (error) ElMessage.error('照片上傳失敗')
+  if (error) toast.error('照片上傳失敗')
   await load()
 }
 
 async function onJudge() {
   const { error } = await judgeSheet({ path: { sheet_id: sheetId } })
   if (error) {
-    ElMessage.error(String((error as any).detail ?? '判定失敗'))
+    toast.error(errDetail(error, '判定失敗'))
     return
   }
   await load()
-  ElMessage.success('綜合判定完成')
+  toast.success('綜合判定完成')
 }
 
 async function onTransition(to: string) {
@@ -134,7 +156,7 @@ async function onTransition(to: string) {
   })
   if (error) {
     // 後端狀態機擋下(例:不合格未做二次拆檢)
-    ElMessage.error(String((error as any).detail ?? '狀態轉移失敗'))
+    toast.error(errDetail(error, '狀態轉移失敗'))
     return
   }
   await load()
@@ -143,21 +165,21 @@ async function onTransition(to: string) {
 async function onApprove() {
   const { error } = await approve({ path: { sheet_id: sheetId }, body: { comment: '' } })
   if (error) {
-    ElMessage.error(String((error as any).detail ?? '簽核失敗'))
+    toast.error(errDetail(error, '簽核失敗'))
     return
   }
   await load()
-  ElMessage.success('已簽核')
+  toast.success('已簽核')
 }
 
 async function onReject() {
   const { error } = await reject({ path: { sheet_id: sheetId }, body: { comment: '' } })
   if (error) {
-    ElMessage.error(String((error as any).detail ?? '退件失敗'))
+    toast.error(errDetail(error, '退件失敗'))
     return
   }
   await load()
-  ElMessage.warning('已退件並開立異常單')
+  toast.warning('已退件並開立異常單')
 }
 
 function pickFile(accept: string, callback: (file: File) => void) {
@@ -176,222 +198,211 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="sheet">
-    <div class="toolbar">
-      <h2>
-        檢驗單 #{{ sheet.id }} — 櫃號 {{ sheet.container_no }}
-        <el-tag :type="statusTagType(sheet.status)">{{ statusLabel(sheet.status) }}</el-tag>
-      </h2>
+  <div v-if="sheet" class="mx-auto max-w-5xl">
+    <!-- 頁首 -->
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <el-button v-if="editable" @click="addModelVisible = true">新增型號</el-button>
-        <el-button v-if="editable" type="primary" @click="onJudge">執行綜合判定</el-button>
-        <el-button
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-semibold tracking-tight">檢驗單 #{{ sheet.id }}</h1>
+          <Badge :variant="statusVariant(sheet.status)">{{ statusLabel(sheet.status) }}</Badge>
+        </div>
+        <p class="mt-1 text-sm text-muted-foreground">
+          櫃號 {{ sheet.container_no }}
+          <template v-if="sheet.seal_no"> · 封籤 {{ sheet.seal_no }}</template>
+          <template v-if="sheet.qc_date"> · QC {{ sheet.qc_date }}</template>
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <Button v-if="editable" variant="outline" @click="addModelOpen = true">
+          <Plus />新增型號
+        </Button>
+        <Button v-if="editable" @click="onJudge">
+          <Scale />執行綜合判定
+        </Button>
+        <Button
           v-if="sheet.status === 'judged'"
-          type="warning"
+          variant="secondary"
           @click="onTransition('second_inspection')"
         >
           啟動二次拆檢
-        </el-button>
-        <el-button
+        </Button>
+        <Button
           v-if="['judged', 'second_inspection'].includes(sheet.status)"
-          type="success"
+          variant="success"
           @click="onTransition('pending_review')"
         >
           送審
-        </el-button>
+        </Button>
         <template v-if="sheet.status === 'pending_review' && isSupervisor()">
-          <el-button type="success" @click="onApprove">簽核通過</el-button>
-          <el-button type="danger" @click="onReject">退件/開異常單</el-button>
+          <Button variant="success" @click="onApprove"><CheckCircle2 />簽核通過</Button>
+          <Button variant="destructive" @click="onReject">退件/開異常單</Button>
         </template>
         <a
           v-if="['approved', 'archived'].includes(sheet.status)"
           :href="`/api/export/sheets/${sheet.id}/xlsx`"
         >
-          <el-button type="primary">匯出 Excel</el-button>
+          <Button variant="outline"><FileSpreadsheet />匯出 Excel</Button>
         </a>
-        <el-button v-if="sheet.status === 'approved'" @click="onTransition('archived')">
+        <Button v-if="sheet.status === 'approved'" variant="ghost" @click="onTransition('archived')">
           結案歸檔
-        </el-button>
+        </Button>
       </div>
     </div>
 
-    <el-card v-for="mi in sheet.model_inspections" :key="mi.id" class="model-card">
+    <!-- 型號卡片 -->
+    <Card v-for="mi in sheet.model_inspections" :key="mi.id" class="mb-5">
       <template #header>
-        <b>{{ mi.product_name }}</b>
-        <el-tag
-          :type="mi.result === 'pass' ? 'success' : mi.result === 'fail' ? 'danger' : 'info'"
-          style="margin-left: 8px"
-        >
-          {{ RESULT_LABELS[mi.result] }}
-        </el-tag>
-        <span class="batch">批號:{{ mi.batch_code || '—' }}</span>
+        <span class="font-semibold">{{ mi.product_name }}</span>
+        <Badge :variant="resultVariant(mi.result)">{{ RESULT_LABELS[mi.result] }}</Badge>
+        <span class="ml-auto text-xs text-muted-foreground">批號 {{ mi.batch_code || '—' }}</span>
       </template>
 
-      <h4>檢驗項目</h4>
-      <el-table :data="itemsOf(mi).filter((i: any) => !['auto', 'pdf'].includes(i.source_type))" size="small">
-        <el-table-column label="項目" prop="label" width="220" />
-        <el-table-column label="檢驗規範" prop="standard_text" width="200" />
-        <el-table-column label="填寫">
-          <template #default="{ row }">
-            <template v-if="row.source_type === 'check'">
-              <el-radio-group
-                :model-value="(mi.item_values as any)[row.key]"
-                :disabled="!editable"
-                @update:model-value="(v: any) => onValueChange(mi, row.key, v)"
-              >
-                <el-radio-button value="OK">OK</el-radio-button>
-                <el-radio-button value="NG">NG</el-radio-button>
-              </el-radio-group>
-            </template>
-            <template v-else>
-              <el-input
-                :model-value="(mi.item_values as any)[row.key]"
-                :disabled="!editable"
-                style="width: 160px"
-                :class="{ highlighted: isHighlighted(mi, row.key) }"
-                @change="(v: string) => onValueChange(mi, row.key, v)"
-              />
-            </template>
-            <el-tag v-if="isHighlighted(mi, row.key)" type="danger" size="small" class="hl-tag">
-              異常
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 檢驗項目(手動/勾選) -->
+      <h3 class="mb-3 text-sm font-semibold text-muted-foreground">檢驗項目</h3>
+      <div class="mb-6 overflow-hidden rounded-lg border">
+        <table class="w-full text-sm">
+          <tbody>
+            <tr
+              v-for="item in manualItems(mi)"
+              :key="item.key"
+              class="border-b last:border-0"
+              :class="isHighlighted(mi, item.key) && 'bg-destructive/5'"
+            >
+              <td class="w-56 px-4 py-2.5 font-medium">{{ item.label }}</td>
+              <td class="w-48 px-4 py-2.5 text-xs text-muted-foreground">
+                {{ item.standard_text }}
+              </td>
+              <td class="px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                  <OkNgToggle
+                    v-if="item.source_type === 'check'"
+                    :model-value="(mi.item_values as any)[item.key]"
+                    :disabled="!editable"
+                    @update:model-value="(v?: string) => onValueChange(mi, item.key, v)"
+                  />
+                  <Input
+                    v-else
+                    :model-value="(mi.item_values as any)[item.key]"
+                    :disabled="!editable"
+                    :invalid="isHighlighted(mi, item.key)"
+                    class="max-w-40"
+                    @change="(e: Event) => onValueChange(mi, item.key, (e.target as HTMLInputElement).value)"
+                  />
+                  <span
+                    v-if="isHighlighted(mi, item.key)"
+                    class="flex items-center gap-1 text-xs text-destructive"
+                  >
+                    <AlertTriangle class="size-3.5" />{{ highlightReason(mi, item.key) }}
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <h4>
-        樣品(積分球數據)
-        <el-button v-if="editable" size="small" @click="onAddSample(mi)">+ 加入樣品</el-button>
-      </h4>
-      <el-card v-for="sample in mi.samples" :key="sample.id" class="sample-card" shadow="never">
-        <template #header>
-          <b>第 {{ sample.seq }} 件</b>
-          <el-tag v-if="sample.seq > 1" type="warning" size="small">二次拆檢</el-tag>
-          <el-tag v-if="sample.confirmed" type="success" size="small">數據已確認</el-tag>
-          <el-tag v-else type="info" size="small">待確認</el-tag>
-          <span v-if="sample.pdf_filename" class="pdf-name">{{ sample.pdf_filename }}</span>
-        </template>
-        <div class="sample-actions" v-if="editable">
-          <el-button size="small" @click="pickFile('.pdf', (f) => onUploadPdf(sample, f))">
-            上傳積分球 PDF
-          </el-button>
-          <el-button
-            size="small"
-            @click="pickFile('image/*', (f) => onUploadPhoto(sample, f, 'part'))"
-          >
-            上傳拆解照片
-          </el-button>
-          <el-button size="small" type="primary" :disabled="sample.confirmed" @click="onConfirmSample(sample)">
-            確認數據
-          </el-button>
-        </div>
-        <div class="photometric">
-          <div
-            v-for="item in itemsOf(mi).filter((i: any) => i.source_type === 'pdf')"
-            :key="item.key"
-            class="ph-field"
-          >
-            <label>{{ item.label }}<small>({{ item.standard_text }})</small></label>
-            <el-input
-              :model-value="(sample.photometric as any)[item.key]"
-              :disabled="!editable"
-              :class="{ highlighted: isHighlighted(mi, item.key, sample.seq) }"
-              @change="(v: string) => onPhotometricChange(sample, item.key, v)"
-            />
+      <!-- 樣品 -->
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-muted-foreground">樣品(積分球數據)</h3>
+        <Button v-if="editable" size="sm" variant="outline" @click="onAddSample(mi)">
+          <Plus />加入樣品
+        </Button>
+      </div>
+
+      <div
+        v-for="sample in mi.samples"
+        :key="sample.id"
+        class="mb-3 rounded-lg border bg-muted/30 p-4 last:mb-0"
+      >
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <span class="font-medium">第 {{ sample.seq }} 件</span>
+          <Badge v-if="sample.seq > 1" variant="warning">二次拆檢</Badge>
+          <Badge v-if="sample.confirmed" variant="success">數據已確認</Badge>
+          <Badge v-else variant="muted">待確認</Badge>
+          <span v-if="sample.pdf_filename" class="text-xs text-muted-foreground">
+            {{ sample.pdf_filename }}
+          </span>
+          <div v-if="editable" class="ml-auto flex gap-2">
+            <Button size="sm" variant="outline" @click="pickFile('.pdf', (f) => onUploadPdf(sample, f))">
+              <FileUp />積分球 PDF
+            </Button>
+            <Button size="sm" variant="outline" @click="pickFile('image/*', (f) => onUploadPhoto(sample, f))">
+              <Camera />拆解照片
+            </Button>
+            <Button size="sm" :disabled="sample.confirmed" @click="onConfirmSample(sample)">
+              確認數據
+            </Button>
           </div>
         </div>
-        <div v-if="sample.photos?.length" class="photos">
+
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div v-for="item in pdfItems(mi)" :key="item.key">
+            <label class="mb-1 block text-xs font-medium">
+              {{ item.label }}
+              <span class="text-muted-foreground">({{ item.standard_text }})</span>
+            </label>
+            <Input
+              :model-value="(sample.photometric as any)[item.key]"
+              :disabled="!editable"
+              :invalid="isHighlighted(mi, item.key, sample.seq)"
+              @change="(e: Event) => onPhotometricChange(sample, item.key, (e.target as HTMLInputElement).value)"
+            />
+            <p
+              v-if="isHighlighted(mi, item.key, sample.seq)"
+              class="mt-1 flex items-center gap-1 text-xs text-destructive"
+            >
+              <AlertTriangle class="size-3" />{{ highlightReason(mi, item.key, sample.seq) }}
+            </p>
+          </div>
+        </div>
+
+        <div v-if="sample.photos?.length" class="mt-3 flex flex-wrap gap-2">
           <img
             v-for="photo in sample.photos"
             :key="photo.id"
             :src="`/api/files/${photo.filename}`"
             :alt="photo.kind"
+            class="h-28 rounded-md border object-cover"
           />
         </div>
-      </el-card>
-    </el-card>
+      </div>
+      <p v-if="!mi.samples?.length" class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        尚無樣品,點「加入樣品」後上傳積分球 PDF 或人工輸入數據
+      </p>
+    </Card>
 
-    <el-dialog v-model="addModelVisible" title="新增型號" width="480px">
-      <el-form label-width="90px">
-        <el-form-item label="檢驗標準" required>
-          <el-select v-model="modelForm.spec_template_id" style="width: 100%">
-            <el-option
-              v-for="spec in specs"
-              :key="spec.id"
-              :value="spec.id"
-              :label="`${spec.name} (v${spec.version})`"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="產品名稱" required>
-          <el-input v-model="modelForm.product_name" placeholder="例:LED 防潮灯 15W 曜弧黑" />
-        </el-form-item>
-        <el-form-item label="批號">
-          <el-input v-model="modelForm.batch_code" />
-        </el-form-item>
-      </el-form>
+    <p
+      v-if="!sheet.model_inspections?.length"
+      class="rounded-xl border border-dashed p-12 text-center text-muted-foreground"
+    >
+      尚未加入型號,點右上角「新增型號」開始檢驗
+    </p>
+
+    <!-- 新增型號 Dialog -->
+    <Dialog v-model:open="addModelOpen" title="新增型號">
+      <div class="space-y-4">
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium">檢驗標準 <span class="text-destructive">*</span></label>
+          <Select v-model="modelForm.spec_template_id">
+            <option :value="0" disabled>請選擇</option>
+            <option v-for="spec in specs" :key="spec.id" :value="spec.id">
+              {{ spec.name }}(v{{ spec.version }})
+            </option>
+          </Select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium">產品名稱 <span class="text-destructive">*</span></label>
+          <Input v-model="modelForm.product_name" placeholder="例:LED 防潮灯 15W 曜弧黑" />
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium">批號</label>
+          <Input v-model="modelForm.batch_code" />
+        </div>
+      </div>
       <template #footer>
-        <el-button @click="addModelVisible = false">取消</el-button>
-        <el-button type="primary" @click="onAddModel">新增</el-button>
+        <Button variant="ghost" @click="addModelOpen = false">取消</Button>
+        <Button @click="onAddModel">新增</Button>
       </template>
-    </el-dialog>
+    </Dialog>
   </div>
 </template>
-
-<style scoped>
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.model-card {
-  margin-bottom: 16px;
-}
-.batch {
-  margin-left: 16px;
-  color: #909399;
-  font-size: 13px;
-}
-.sample-card {
-  margin-bottom: 12px;
-  background: #fafafa;
-}
-.sample-actions {
-  margin-bottom: 12px;
-}
-.pdf-name {
-  margin-left: 12px;
-  color: #909399;
-  font-size: 12px;
-}
-.photometric {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
-}
-.ph-field label {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-.ph-field small {
-  color: #909399;
-  margin-left: 4px;
-}
-/* 異常高亮:取代紙本的黃螢光筆 */
-.highlighted :deep(.el-input__wrapper) {
-  background: #fdedec;
-  box-shadow: 0 0 0 1px #e74c3c inset;
-}
-.hl-tag {
-  margin-left: 8px;
-}
-.photos img {
-  height: 120px;
-  margin: 8px 8px 0 0;
-  border-radius: 4px;
-  object-fit: cover;
-}
-</style>
