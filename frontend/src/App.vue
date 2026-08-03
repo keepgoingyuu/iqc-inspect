@@ -58,7 +58,7 @@ async function onLogout() {
     <!-- 側邊欄(可收合,仿 Cloudflare) -->
     <aside
       class="fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-sidebar text-sidebar-foreground transition-[width] duration-200"
-      :class="[expanded ? 'w-56' : 'w-14', collapsed && hovered && 'shadow-2xl shadow-black/40']"
+      :class="expanded ? 'w-56' : 'w-14'"
       @mouseenter="hovered = true"
       @mouseleave="hovered = false"
     >
@@ -145,9 +145,10 @@ async function onLogout() {
     </aside>
 
     <!-- 主內容 -->
+    <!-- 推擠式:hover 展開時內容跟著讓位,不被遮住 -->
     <main
       class="flex-1 px-8 py-6 transition-[margin] duration-200"
-      :class="collapsed ? 'ml-14' : 'ml-56'"
+      :class="expanded ? 'ml-56' : 'ml-14'"
     >
       <router-view />
     </main>
