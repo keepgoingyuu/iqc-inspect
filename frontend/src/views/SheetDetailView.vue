@@ -91,7 +91,15 @@ async function onAddModel() {
 
 async function onValueChange(mi: ModelOut, key: string, value: string | number | undefined) {
   if (value === undefined) return
-  await updateItemValues({ path: { model_id: mi.id }, body: { item_values: { [key]: value } } })
+  ;(mi.item_values as any)[key] = value // 樂觀更新:畫面立即反應,再同步後端
+  const { error } = await updateItemValues({
+    path: { model_id: mi.id },
+    body: { item_values: { [key]: value } },
+  })
+  if (error) {
+    toast.error(errDetail(error, '儲存失敗'))
+    await load() // 失敗時還原為後端狀態
+  }
 }
 
 async function onAddSample(mi: ModelOut) {
@@ -120,7 +128,15 @@ async function onUploadPdf(sample: SampleOut, file: File) {
 async function onPhotometricChange(sample: SampleOut, key: string, value: string | number | undefined) {
   const num = Number(value)
   if (value === undefined || Number.isNaN(num)) return
-  await updateSample({ path: { sample_id: sample.id }, body: { photometric: { [key]: num } } })
+  ;(sample.photometric as any)[key] = num // 樂觀更新
+  const { error } = await updateSample({
+    path: { sample_id: sample.id },
+    body: { photometric: { [key]: num } },
+  })
+  if (error) {
+    toast.error(errDetail(error, '儲存失敗'))
+    await load()
+  }
 }
 
 async function onConfirmSample(sample: SampleOut) {
