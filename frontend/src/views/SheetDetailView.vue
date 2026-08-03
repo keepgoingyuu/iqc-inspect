@@ -339,11 +339,21 @@ onMounted(async () => {
             {{ sample.pdf_filename }}
           </span>
           <div v-if="editable" class="ml-auto flex gap-2">
-            <Button size="sm" variant="outline" @click="pickFile('.pdf', (f) => onUploadPdf(sample, f))">
-              <FileUp />積分球 PDF
+            <Button
+              size="sm"
+              variant="outline"
+              title="匯入積分球測試報告,自動填入光電數據(只接受 .pdf)"
+              @click="pickFile('.pdf', (f) => onUploadPdf(sample, f))"
+            >
+              <FileUp />匯入數據 PDF
             </Button>
-            <Button size="sm" variant="outline" @click="pickFile('image/*', (f) => onUploadPhoto(sample, f))">
-              <Camera />拆解照片
+            <Button
+              size="sm"
+              variant="outline"
+              title="上傳拆解零件照片(JPG/PNG,手機可直接拍照)"
+              @click="pickFile('image/*', (f) => onUploadPhoto(sample, f))"
+            >
+              <Camera />上傳照片
             </Button>
             <Button size="sm" :disabled="sample.confirmed" @click="onConfirmSample(sample)">
               確認數據
