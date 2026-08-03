@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddModelData, AddModelErrors, AddModelResponses, AddSampleData, AddSampleErrors, AddSampleResponses, ApproveData, ApproveErrors, ApproveResponses, AuditTrailData, AuditTrailErrors, AuditTrailResponses, CreateSheetData, CreateSheetErrors, CreateSheetResponses, CreateSpecData, CreateSpecErrors, CreateSpecResponses, ExportXlsxData, ExportXlsxErrors, ExportXlsxResponses, GetFileData, GetFileErrors, GetFileResponses, GetSheetData, GetSheetErrors, GetSheetResponses, GetSpecData, GetSpecErrors, GetSpecResponses, HealthData, HealthResponses, JudgeSheetData, JudgeSheetErrors, JudgeSheetResponses, ListSheetsData, ListSheetsErrors, ListSheetsResponses, ListSpecsData, ListSpecsErrors, ListSpecsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, MeData, MeErrors, MeResponses, RejectData, RejectErrors, RejectResponses, TransitionSheetData, TransitionSheetErrors, TransitionSheetResponses, UpdateItemValuesData, UpdateItemValuesErrors, UpdateItemValuesResponses, UpdateSampleData, UpdateSampleErrors, UpdateSampleResponses, UploadPdfData, UploadPdfErrors, UploadPdfResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { AddModelData, AddModelErrors, AddModelResponses, AddSampleData, AddSampleErrors, AddSampleResponses, ApproveData, ApproveErrors, ApproveResponses, AuditTrailData, AuditTrailErrors, AuditTrailResponses, ConfirmMarkingData, ConfirmMarkingErrors, ConfirmMarkingResponses, CreateProductData, CreateProductErrors, CreateProductResponses, CreateSheetData, CreateSheetErrors, CreateSheetResponses, CreateSpecData, CreateSpecErrors, CreateSpecResponses, ExportXlsxData, ExportXlsxErrors, ExportXlsxResponses, GetFileData, GetFileErrors, GetFileResponses, GetSheetData, GetSheetErrors, GetSheetResponses, GetSpecData, GetSpecErrors, GetSpecResponses, HealthData, HealthResponses, JudgeSheetData, JudgeSheetErrors, JudgeSheetResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSheetsData, ListSheetsErrors, ListSheetsResponses, ListSpecsData, ListSpecsErrors, ListSpecsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, MeData, MeErrors, MeResponses, RejectData, RejectErrors, RejectResponses, RunOcrData, RunOcrErrors, RunOcrResponses, TransitionSheetData, TransitionSheetErrors, TransitionSheetResponses, UpdateItemValuesData, UpdateItemValuesErrors, UpdateItemValuesResponses, UpdateProductData, UpdateProductErrors, UpdateProductResponses, UpdateSampleData, UpdateSampleErrors, UpdateSampleResponses, UploadCertPhotoData, UploadCertPhotoErrors, UploadCertPhotoResponses, UploadPdfData, UploadPdfErrors, UploadPdfResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -65,6 +65,48 @@ export const createSpec = <ThrowOnError extends boolean = false>(options: Option
 export const getSpec = <ThrowOnError extends boolean = false>(options: Options<GetSpecData, ThrowOnError>): RequestResult<GetSpecResponses, GetSpecErrors, ThrowOnError> => (options.client ?? client).get<GetSpecResponses, GetSpecErrors, ThrowOnError>({ url: '/api/specs/{spec_id}', ...options });
 
 /**
+ * List Products
+ */
+export const listProducts = <ThrowOnError extends boolean = false>(options?: Options<ListProductsData, ThrowOnError>): RequestResult<ListProductsResponses, ListProductsErrors, ThrowOnError> => (options?.client ?? client).get<ListProductsResponses, ListProductsErrors, ThrowOnError>({ url: '/api/products', ...options });
+
+/**
+ * Create Product
+ */
+export const createProduct = <ThrowOnError extends boolean = false>(options: Options<CreateProductData, ThrowOnError>): RequestResult<CreateProductResponses, CreateProductErrors, ThrowOnError> => (options.client ?? client).post<CreateProductResponses, CreateProductErrors, ThrowOnError>({
+    url: '/api/products',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update Product
+ */
+export const updateProduct = <ThrowOnError extends boolean = false>(options: Options<UpdateProductData, ThrowOnError>): RequestResult<UpdateProductResponses, UpdateProductErrors, ThrowOnError> => (options.client ?? client).patch<UpdateProductResponses, UpdateProductErrors, ThrowOnError>({
+    url: '/api/products/{product_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Upload Cert Photo
+ */
+export const uploadCertPhoto = <ThrowOnError extends boolean = false>(options: Options<UploadCertPhotoData, ThrowOnError>): RequestResult<UploadCertPhotoResponses, UploadCertPhotoErrors, ThrowOnError> => (options.client ?? client).post<UploadCertPhotoResponses, UploadCertPhotoErrors, ThrowOnError>({
+    ...formDataBodySerializer,
+    url: '/api/products/{product_id}/cert-photos',
+    ...options,
+    headers: {
+        'Content-Type': null,
+        ...options.headers
+    }
+});
+
+/**
  * List Sheets
  */
 export const listSheets = <ThrowOnError extends boolean = false>(options?: Options<ListSheetsData, ThrowOnError>): RequestResult<ListSheetsResponses, ListSheetsErrors, ThrowOnError> => (options?.client ?? client).get<ListSheetsResponses, ListSheetsErrors, ThrowOnError>({ url: '/api/sheets', ...options });
@@ -88,6 +130,8 @@ export const getSheet = <ThrowOnError extends boolean = false>(options: Options<
 
 /**
  * Add Model
+ *
+ * 選「產品」加入檢驗單:類別現行標準 + 參數 + 預期標示自動帶出並快照。
  */
 export const addModel = <ThrowOnError extends boolean = false>(options: Options<AddModelData, ThrowOnError>): RequestResult<AddModelResponses, AddModelErrors, ThrowOnError> => (options.client ?? client).post<AddModelResponses, AddModelErrors, ThrowOnError>({
     url: '/api/sheets/{sheet_id}/models',
@@ -182,9 +226,30 @@ export const uploadPhoto = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
+ * Run Ocr
+ *
+ * OCR 提示:模型讀標示照字串 → 程式比對預期標示 → 綠/黃燈(不參與判定)。
+ */
+export const runOcr = <ThrowOnError extends boolean = false>(options: Options<RunOcrData, ThrowOnError>): RequestResult<RunOcrResponses, RunOcrErrors, ThrowOnError> => (options.client ?? client).post<RunOcrResponses, RunOcrErrors, ThrowOnError>({ url: '/api/photos/{photo_id}/ocr', ...options });
+
+/**
  * Get File
  */
 export const getFile = <ThrowOnError extends boolean = false>(options: Options<GetFileData, ThrowOnError>): RequestResult<GetFileResponses, GetFileErrors, ThrowOnError> => (options.client ?? client).get<GetFileResponses, GetFileErrors, ThrowOnError>({ url: '/api/files/{filename}', ...options });
+
+/**
+ * Confirm Marking
+ *
+ * 主管逐型號確認「主機板標示與認證一致」— 全數確認後簽核才會放行。
+ */
+export const confirmMarking = <ThrowOnError extends boolean = false>(options: Options<ConfirmMarkingData, ThrowOnError>): RequestResult<ConfirmMarkingResponses, ConfirmMarkingErrors, ThrowOnError> => (options.client ?? client).post<ConfirmMarkingResponses, ConfirmMarkingErrors, ThrowOnError>({
+    url: '/api/review/models/{model_id}/confirm-marking',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Approve
@@ -218,10 +283,7 @@ export const auditTrail = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Export Xlsx
  *
- * 匯出檢驗報表 Excel。
- *
- * 注意:目前為系統預設版面;待取得公司現行報表模板檔後改為模板填值,
- * 使格式與紙本 100% 一致(docs/requirements.md §7)。
+ * 匯出檢驗報表 Excel(紙本版面重刻;待公司模板到手後改為模板填值)。
  */
 export const exportXlsx = <ThrowOnError extends boolean = false>(options: Options<ExportXlsxData, ThrowOnError>): RequestResult<ExportXlsxResponses, ExportXlsxErrors, ThrowOnError> => (options.client ?? client).get<ExportXlsxResponses, ExportXlsxErrors, ThrowOnError>({ url: '/api/export/sheets/{sheet_id}/xlsx', ...options });
 

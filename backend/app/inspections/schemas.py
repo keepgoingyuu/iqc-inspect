@@ -11,8 +11,7 @@ class SheetCreate(BaseModel):
 
 
 class ModelCreate(BaseModel):
-    spec_template_id: int
-    product_name: str
+    product_id: int
     batch_code: str = ""
 
 
@@ -37,6 +36,8 @@ class PhotoOut(BaseModel):
     id: int
     kind: str
     filename: str
+    ocr_text: str
+    ocr_match: bool | None
 
     model_config = {"from_attributes": True}
 
@@ -56,8 +57,12 @@ class SampleOut(BaseModel):
 class ModelOut(BaseModel):
     id: int
     spec_template_id: int
+    product_id: int | None
     product_name: str
     batch_code: str
+    params: dict
+    expected_marking: str
+    marking_confirmed: bool
     item_values: dict
     result: str
     judgement: dict

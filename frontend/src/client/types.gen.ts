@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_upload_cert_photo
+ */
+export type BodyUploadCertPhoto = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
  * Body_upload_pdf
  */
 export type BodyUploadPdf = {
@@ -61,17 +71,23 @@ export type LoginRequest = {
 };
 
 /**
+ * MarkingConfirmRequest
+ */
+export type MarkingConfirmRequest = {
+    /**
+     * Confirmed
+     */
+    confirmed: boolean;
+};
+
+/**
  * ModelCreate
  */
 export type ModelCreate = {
     /**
-     * Spec Template Id
+     * Product Id
      */
-    spec_template_id: number;
-    /**
-     * Product Name
-     */
-    product_name: string;
+    product_id: number;
     /**
      * Batch Code
      */
@@ -91,6 +107,10 @@ export type ModelOut = {
      */
     spec_template_id: number;
     /**
+     * Product Id
+     */
+    product_id: number | null;
+    /**
      * Product Name
      */
     product_name: string;
@@ -98,6 +118,20 @@ export type ModelOut = {
      * Batch Code
      */
     batch_code: string;
+    /**
+     * Params
+     */
+    params: {
+        [key: string]: unknown;
+    };
+    /**
+     * Expected Marking
+     */
+    expected_marking: string;
+    /**
+     * Marking Confirmed
+     */
+    marking_confirmed: boolean;
     /**
      * Item Values
      */
@@ -156,6 +190,108 @@ export type PhotoOut = {
      * Filename
      */
     filename: string;
+    /**
+     * Ocr Text
+     */
+    ocr_text: string;
+    /**
+     * Ocr Match
+     */
+    ocr_match: boolean | null;
+};
+
+/**
+ * ProductCreate
+ */
+export type ProductCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Params
+     */
+    params?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Expected Marking
+     */
+    expected_marking?: string;
+};
+
+/**
+ * ProductOut
+ */
+export type ProductOut = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Params
+     */
+    params: {
+        [key: string]: unknown;
+    };
+    /**
+     * Expected Marking
+     */
+    expected_marking: string;
+    /**
+     * Active
+     */
+    active: boolean;
+    /**
+     * Cert Photos
+     */
+    cert_photos?: Array<ProductPhotoOut>;
+};
+
+/**
+ * ProductPhotoOut
+ */
+export type ProductPhotoOut = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Filename
+     */
+    filename: string;
+};
+
+/**
+ * ProductUpdate
+ */
+export type ProductUpdate = {
+    /**
+     * Params
+     */
+    params?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Expected Marking
+     */
+    expected_marking?: string | null;
+    /**
+     * Active
+     */
+    active?: boolean | null;
 };
 
 /**
@@ -596,6 +732,118 @@ export type GetSpecResponses = {
 
 export type GetSpecResponse = GetSpecResponses[keyof GetSpecResponses];
 
+export type ListProductsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/products';
+};
+
+export type ListProductsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListProductsError = ListProductsErrors[keyof ListProductsErrors];
+
+export type ListProductsResponses = {
+    /**
+     * Response List Products
+     *
+     * Successful Response
+     */
+    200: Array<ProductOut>;
+};
+
+export type ListProductsResponse = ListProductsResponses[keyof ListProductsResponses];
+
+export type CreateProductData = {
+    body: ProductCreate;
+    path?: never;
+    query?: never;
+    url: '/api/products';
+};
+
+export type CreateProductErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateProductError = CreateProductErrors[keyof CreateProductErrors];
+
+export type CreateProductResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProductOut;
+};
+
+export type CreateProductResponse = CreateProductResponses[keyof CreateProductResponses];
+
+export type UpdateProductData = {
+    body: ProductUpdate;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: number;
+    };
+    query?: never;
+    url: '/api/products/{product_id}';
+};
+
+export type UpdateProductErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateProductError = UpdateProductErrors[keyof UpdateProductErrors];
+
+export type UpdateProductResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProductOut;
+};
+
+export type UpdateProductResponse = UpdateProductResponses[keyof UpdateProductResponses];
+
+export type UploadCertPhotoData = {
+    body: BodyUploadCertPhoto;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: number;
+    };
+    query?: never;
+    url: '/api/products/{product_id}/cert-photos';
+};
+
+export type UploadCertPhotoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UploadCertPhotoError = UploadCertPhotoErrors[keyof UploadCertPhotoErrors];
+
+export type UploadCertPhotoResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProductPhotoOut;
+};
+
+export type UploadCertPhotoResponse = UploadCertPhotoResponses[keyof UploadCertPhotoResponses];
+
 export type ListSheetsData = {
     body?: never;
     path?: never;
@@ -923,6 +1171,40 @@ export type UploadPhotoResponses = {
 
 export type UploadPhotoResponse = UploadPhotoResponses[keyof UploadPhotoResponses];
 
+export type RunOcrData = {
+    body?: never;
+    path: {
+        /**
+         * Photo Id
+         */
+        photo_id: number;
+    };
+    query?: never;
+    url: '/api/photos/{photo_id}/ocr';
+};
+
+export type RunOcrErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RunOcrError = RunOcrErrors[keyof RunOcrErrors];
+
+export type RunOcrResponses = {
+    /**
+     * Response Run Ocr
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type RunOcrResponse = RunOcrResponses[keyof RunOcrResponses];
+
 export type GetFileData = {
     body?: never;
     path: {
@@ -950,6 +1232,40 @@ export type GetFileResponses = {
      */
     200: unknown;
 };
+
+export type ConfirmMarkingData = {
+    body: MarkingConfirmRequest;
+    path: {
+        /**
+         * Model Id
+         */
+        model_id: number;
+    };
+    query?: never;
+    url: '/api/review/models/{model_id}/confirm-marking';
+};
+
+export type ConfirmMarkingErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConfirmMarkingError = ConfirmMarkingErrors[keyof ConfirmMarkingErrors];
+
+export type ConfirmMarkingResponses = {
+    /**
+     * Response Confirm Marking
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ConfirmMarkingResponse = ConfirmMarkingResponses[keyof ConfirmMarkingResponses];
 
 export type ApproveData = {
     body: ReviewRequest;

@@ -120,8 +120,12 @@ def build_workbook(sheet: InspectionSheet) -> Workbook:
     for item in template_items:
         key = item["key"]
         rule = item.get("rule", {})
-        lo, hi = _resolve_range(rule) if rule.get("type") == "range" else (None, None)
-        has_bounds = lo is not None and hi is not None
+        # 逐型號解析範圍(參數化標準:同單不同瓦數的型號,上下限各自不同)
+        per_model_bounds = [
+            _resolve_range(rule, mi.params) if rule.get("type") == "range" else (None, None)
+            for mi in models
+        ]
+        has_bounds = any(lo is not None and hi is not None for lo, hi in per_model_bounds)
 
         # 範圍項:第一行為各型號的上下限拆格
         if has_bounds:
@@ -129,8 +133,9 @@ def build_workbook(sheet: InspectionSheet) -> Workbook:
             _cell(ws, row, SPEC_COL, item.get("standard_text", ""))
             for i, _mi in enumerate(models):
                 c1, c2 = _model_cols(i)
-                _cell(ws, row, c1, f"{lo:g}")
-                _cell(ws, row, c2, f"{hi:g}")
+                lo, hi = per_model_bounds[i]
+                _cell(ws, row, c1, f"{lo:g}" if lo is not None else "—")
+                _cell(ws, row, c2, f"{hi:g}" if hi is not None else "—")
             row += 1
             label_cell, spec_cell = "", ""  # 實測行標籤留空(同紙本)
         else:

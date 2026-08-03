@@ -8,7 +8,7 @@ from app.auth.service import require_supervisor
 from app.database import get_db
 from app.inspections.schemas import SheetOut
 from app.inspections.state_machine import TransitionError, transition
-from app.models import AuditLog, InspectionSheet, User
+from app.models import AuditLog, InspectionSheet, ModelInspection, User
 
 router = APIRouter(prefix="/api/review", tags=["review"])
 
@@ -32,6 +32,33 @@ def _get_sheet(db: Session, sheet_id: int) -> InspectionSheet:
     if sheet is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "檢驗單不存在")
     return sheet
+
+
+class MarkingConfirmRequest(BaseModel):
+    confirmed: bool
+
+
+@router.post("/models/{model_id}/confirm-marking")
+def confirm_marking(
+    model_id: int,
+    body: MarkingConfirmRequest,
+    db: Session = Depends(get_db),
+    supervisor: User = Depends(require_supervisor),
+) -> dict:
+    """主管逐型號確認「主機板標示與認證一致」— 全數確認後簽核才會放行。"""
+    mi = db.get(ModelInspection, model_id)
+    if mi is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "型號檢驗不存在")
+    if mi.sheet.status != "pending_review":
+        raise HTTPException(status.HTTP_409_CONFLICT, "只有待審核狀態可確認標示")
+    mi.marking_confirmed = body.confirmed
+    mi.marking_confirmed_by = supervisor.id if body.confirmed else None
+    audit.record(
+        db, mi.sheet_id, supervisor.id, "confirm_marking",
+        {"model_id": model_id, "product": mi.product_name, "confirmed": body.confirmed},
+    )
+    db.commit()
+    return {"model_id": model_id, "marking_confirmed": mi.marking_confirmed}
 
 
 @router.post("/sheets/{sheet_id}/approve", response_model=SheetOut)

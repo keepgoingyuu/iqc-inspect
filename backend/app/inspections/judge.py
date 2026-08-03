@@ -5,6 +5,12 @@
 - min:     值 ≥ min
 - max:     值 ≤ max
 - check:   勾選必須為 "OK"
+
+兩層標準:規則可用「參數引用」取代寫死數字,數值來自型號的參數快照:
+- rule.param      → nominal 取 params[param](例:nominal_power)
+- rule.param_min  → min 取 params[param_min](例:flux_min)
+- rule.param_max  → max 取 params[param_max]
+同一份類別標準,15W 和 24W 的型號各自算出自己的合格範圍。
 """
 
 from typing import Any
@@ -12,9 +18,17 @@ from typing import Any
 from app.models import ModelInspection
 
 
-def _resolve_range(rule: dict) -> tuple[float | None, float | None]:
+def _resolve_range(rule: dict, params: dict | None = None) -> tuple[float | None, float | None]:
+    params = params or {}
     lo, hi = rule.get("min"), rule.get("max")
     nominal = rule.get("nominal")
+    # 參數引用:從型號參數快照取值
+    if rule.get("param") is not None:
+        nominal = params.get(rule["param"], nominal)
+    if rule.get("param_min") is not None:
+        lo = params.get(rule["param_min"], lo)
+    if rule.get("param_max") is not None:
+        hi = params.get(rule["param_max"], hi)
     tol_pct = rule.get("tol_pct")
     if nominal is not None and tol_pct is not None:
         lo = nominal * (1 - tol_pct / 100)
@@ -28,7 +42,15 @@ def _resolve_range(rule: dict) -> tuple[float | None, float | None]:
     return lo, hi
 
 
-def evaluate_item(rule: dict, value: Any) -> dict:
+def _resolve_threshold(rule: dict, key: str, params: dict | None = None) -> float | None:
+    value = rule.get(key)
+    param_ref = rule.get(f"param_{key}")
+    if param_ref is not None:
+        value = (params or {}).get(param_ref, value)
+    return value
+
+
+def evaluate_item(rule: dict, value: Any, params: dict | None = None) -> dict:
     """回傳 {verdict: pass|fail|missing, reason}。"""
     if value is None or value == "":
         return {"verdict": "missing", "reason": "未填寫"}
@@ -45,19 +67,19 @@ def evaluate_item(rule: dict, value: Any) -> dict:
         return {"verdict": "fail", "reason": f"非數值:{value!r}"}
 
     if rtype == "range":
-        lo, hi = _resolve_range(rule)
+        lo, hi = _resolve_range(rule, params)
         if lo is not None and num < lo:
             return {"verdict": "fail", "reason": f"{num} 低於下限 {lo:g}"}
         if hi is not None and num > hi:
             return {"verdict": "fail", "reason": f"{num} 高於上限 {hi:g}"}
         return {"verdict": "pass", "reason": ""}
     if rtype == "min":
-        lo = rule.get("min")
+        lo = _resolve_threshold(rule, "min", params)
         if lo is not None and num < lo:
             return {"verdict": "fail", "reason": f"{num} 低於門檻 {lo:g}"}
         return {"verdict": "pass", "reason": ""}
     if rtype == "max":
-        hi = rule.get("max")
+        hi = _resolve_threshold(rule, "max", params)
         if hi is not None and num > hi:
             return {"verdict": "fail", "reason": f"{num} 高於門檻 {hi:g}"}
         return {"verdict": "pass", "reason": ""}
@@ -88,7 +110,7 @@ def judge_model(mi: ModelInspection) -> dict:
         if source == "pdf":
             per_sample = {}
             for sample in sorted(mi.samples, key=lambda s: s.seq):
-                result = evaluate_item(rule, sample.photometric.get(key))
+                result = evaluate_item(rule, sample.photometric.get(key), mi.params)
                 per_sample[str(sample.seq)] = result
                 if result["verdict"] == "fail":
                     any_fail = True
@@ -102,7 +124,7 @@ def judge_model(mi: ModelInspection) -> dict:
                 per_sample["1"] = {"verdict": "missing", "reason": "尚無樣品數據"}
             detail["items"][key] = per_sample
         else:
-            result = evaluate_item(rule, mi.item_values.get(key))
+            result = evaluate_item(rule, mi.item_values.get(key), mi.params)
             detail["items"][key] = result
             if result["verdict"] == "fail":
                 any_fail = True

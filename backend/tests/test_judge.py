@@ -72,3 +72,17 @@ def test_judge_model_pending_when_missing():
     mi.samples = [Sample(seq=1, photometric={"efficacy": 95.0}, confirmed=True)]
     judge_model(mi)  # visual 未勾選
     assert mi.result == "pending"
+
+
+def test_param_referenced_rules():
+    """兩層設計核心:同一條公式,不同型號參數算出不同範圍。"""
+    rule = {"type": "range", "param": "nominal_power", "min_pct": 90, "max_pct": 110}
+    p15 = {"nominal_power": 15}
+    p24 = {"nominal_power": 24}
+    assert evaluate_item(rule, 13.6, p15)["verdict"] == "pass"   # 13.5~16.5
+    assert evaluate_item(rule, 13.6, p24)["verdict"] == "fail"   # 21.6~26.4
+    assert evaluate_item(rule, 22.0, p24)["verdict"] == "pass"
+
+    flux_rule = {"type": "range", "param_min": "flux_min", "param_max": "flux_max"}
+    assert evaluate_item(flux_rule, 1455.0, {"flux_min": 1350, "flux_max": 1500})["verdict"] == "pass"
+    assert evaluate_item(flux_rule, 1821.457, {"flux_min": 1350, "flux_max": 1500})["verdict"] == "fail"

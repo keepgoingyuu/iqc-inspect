@@ -15,17 +15,20 @@ import {
   addModel,
   addSample,
   approve,
+  confirmMarking,
   getSheet,
   judgeSheet,
+  listProducts,
   listSpecs,
   reject,
+  runOcr,
   transitionSheet,
   updateItemValues,
   updateSample,
   uploadPdf,
   uploadPhoto,
 } from '../client'
-import type { ModelOut, SampleOut, SheetOut, SpecOut } from '../client'
+import type { ModelOut, PhotoOut, ProductOut, SampleOut, SheetOut, SpecOut } from '../client'
 import { isSupervisor } from '../store'
 import { RESULT_LABELS, resultVariant, statusLabel, statusVariant } from '../status'
 import Badge from '@/components/ui/Badge.vue'
@@ -40,8 +43,23 @@ const route = useRoute()
 const sheetId = Number(route.params.id)
 const sheet = ref<SheetOut | null>(null)
 const specs = ref<SpecOut[]>([])
+const products = ref<ProductOut[]>([])
 const addModelOpen = ref(false)
-const modelForm = ref({ spec_template_id: 0, product_name: '', batch_code: '' })
+const modelForm = ref({ product_id: 0, batch_code: '' })
+const ocrLoading = ref<Record<number, boolean>>({})
+
+const productsByCategory = computed(() => {
+  const map = new Map<string, ProductOut[]>()
+  for (const product of products.value.filter((p) => p.active)) {
+    const list = map.get(product.category) ?? []
+    list.push(product)
+    map.set(product.category, list)
+  }
+  return map
+})
+
+const markingPhotos = (mi: ModelOut): PhotoOut[] =>
+  (mi.samples ?? []).flatMap((s) => (s.photos ?? []).filter((p) => p.kind === 'marking'))
 
 const editable = computed(
   () =>
@@ -75,8 +93,8 @@ const errDetail = (error: unknown, fallback: string) =>
   String((error as any)?.detail ?? fallback)
 
 async function onAddModel() {
-  if (!modelForm.value.spec_template_id || !modelForm.value.product_name) {
-    toast.warning('請選擇檢驗標準並輸入產品名稱')
+  if (!modelForm.value.product_id) {
+    toast.warning('請選擇產品')
     return
   }
   const { error } = await addModel({ path: { sheet_id: sheetId }, body: modelForm.value })
@@ -85,7 +103,41 @@ async function onAddModel() {
     return
   }
   addModelOpen.value = false
-  modelForm.value = { spec_template_id: 0, product_name: '', batch_code: '' }
+  modelForm.value = { product_id: 0, batch_code: '' }
+  await load()
+}
+
+async function onRunOcr(photo: PhotoOut) {
+  ocrLoading.value[photo.id] = true
+  try {
+    const { data, error } = await runOcr({ path: { photo_id: photo.id } })
+    if (error) {
+      toast.error(errDetail(error, '辨識失敗'))
+      return
+    }
+    const result = data as any
+    if (!result.available) {
+      toast.warning('模型服務未啟動(Ollama),請人工比對')
+    } else if (result.match) {
+      toast.success(`🟢 辨識結果與預期標示一致:${result.ocr_text}`)
+    } else {
+      toast.warning(`🟡 辨識結果與預期不一致,請細看照片:${result.ocr_text}`)
+    }
+    await load()
+  } finally {
+    ocrLoading.value[photo.id] = false
+  }
+}
+
+async function onConfirmMarking(mi: ModelOut, confirmed: boolean) {
+  const { error } = await confirmMarking({
+    path: { model_id: mi.id },
+    body: { confirmed },
+  })
+  if (error) {
+    toast.error(errDetail(error, '確認失敗'))
+    return
+  }
   await load()
 }
 
@@ -145,13 +197,14 @@ async function onConfirmSample(sample: SampleOut) {
   await load()
 }
 
-async function onUploadPhoto(sample: SampleOut, file: File) {
+async function onUploadPhoto(sample: SampleOut, file: File, kind: 'part' | 'marking') {
   const { error } = await uploadPhoto({
     path: { sample_id: sample.id },
-    query: { kind: 'part' },
+    query: { kind },
     body: { file },
   })
   if (error) toast.error('照片上傳失敗')
+  else if (kind === 'marking') toast.success('主機板標示照已上傳(送審必備)')
   await load()
 }
 
@@ -209,7 +262,11 @@ function pickFile(accept: string, callback: (file: File) => void) {
 }
 
 onMounted(async () => {
-  await Promise.all([load(), listSpecs().then(({ data }) => (specs.value = data ?? []))])
+  await Promise.all([
+    load(),
+    listSpecs().then(({ data }) => (specs.value = data ?? [])),
+    listProducts().then(({ data }) => (products.value = data ?? [])),
+  ])
 })
 </script>
 
@@ -272,6 +329,62 @@ onMounted(async () => {
         <Badge :variant="resultVariant(mi.result)">{{ RESULT_LABELS[mi.result] }}</Badge>
         <span class="ml-auto text-xs text-muted-foreground">批號 {{ mi.batch_code || '—' }}</span>
       </template>
+
+      <!-- 主管審核:主機板標示比對關卡 -->
+      <div
+        v-if="sheet.status === 'pending_review'"
+        class="mb-5 rounded-lg border-2 p-4"
+        :class="mi.marking_confirmed ? 'border-success/50 bg-success/5' : 'border-warning/50 bg-warning/5'"
+      >
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="text-sm font-semibold">主機板標示比對</h3>
+          <Badge :variant="mi.marking_confirmed ? 'success' : 'warning'">
+            {{ mi.marking_confirmed ? '已確認一致' : '待主管確認' }}
+          </Badge>
+        </div>
+        <div class="mb-3">
+          <span class="text-xs text-muted-foreground">預期標示(產品主檔)</span>
+          <p class="font-mono text-lg font-semibold tracking-wide">
+            {{ mi.expected_marking || '(未設定)' }}
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <div v-for="photo in markingPhotos(mi)" :key="photo.id" class="w-52">
+            <a :href="`/api/files/${photo.filename}`" target="_blank" title="點擊放大細看">
+              <img :src="`/api/files/${photo.filename}`" class="h-36 w-full rounded-md border object-cover" />
+            </a>
+            <div class="mt-1.5 space-y-1">
+              <Button
+                size="sm"
+                variant="outline"
+                class="w-full"
+                :disabled="ocrLoading[photo.id]"
+                @click="onRunOcr(photo)"
+              >
+                {{ ocrLoading[photo.id] ? '辨識中…' : '🤖 模型辨識' }}
+              </Button>
+              <p v-if="photo.ocr_text" class="text-xs" :class="photo.ocr_match ? 'text-success' : 'text-warning'">
+                {{ photo.ocr_match ? '🟢 一致' : '🟡 不一致,請細看' }}:
+                <span class="font-mono">{{ photo.ocr_text }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div v-if="isSupervisor()" class="mt-4 border-t pt-3">
+          <label class="flex cursor-pointer items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              class="size-4 accent-[var(--success)]"
+              :checked="mi.marking_confirmed"
+              @change="(e: Event) => onConfirmMarking(mi, (e.target as HTMLInputElement).checked)"
+            />
+            我已比對照片,確認主機板型號與認證標示一致
+          </label>
+          <p class="mt-1 text-xs text-muted-foreground">
+            模型辨識僅供參考;所有型號確認後才可簽核,勾選將記入稽核軌跡
+          </p>
+        </div>
+      </div>
 
       <!-- 檢驗項目(手動/勾選) -->
       <h3 class="mb-3 text-sm font-semibold text-muted-foreground">檢驗項目</h3>
@@ -350,10 +463,18 @@ onMounted(async () => {
             <Button
               size="sm"
               variant="outline"
-              title="上傳拆解零件照片(JPG/PNG,手機可直接拍照)"
-              @click="pickFile('image/*', (f) => onUploadPhoto(sample, f))"
+              title="主機板標示特寫照 — 送審必備,主管審核比對用"
+              @click="pickFile('image/*', (f) => onUploadPhoto(sample, f, 'marking'))"
             >
-              <Camera />上傳照片
+              <Camera />主機板標示照
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              title="上傳拆解零件照片(JPG/PNG,手機可直接拍照)"
+              @click="pickFile('image/*', (f) => onUploadPhoto(sample, f, 'part'))"
+            >
+              <Camera />零件照片
             </Button>
             <Button size="sm" :disabled="sample.confirmed" @click="onConfirmSample(sample)">
               確認數據
@@ -383,13 +504,23 @@ onMounted(async () => {
         </div>
 
         <div v-if="sample.photos?.length" class="mt-3 flex flex-wrap gap-2">
-          <img
-            v-for="photo in sample.photos"
-            :key="photo.id"
-            :src="`/api/files/${photo.filename}`"
-            :alt="photo.kind"
-            class="h-28 rounded-md border object-cover"
-          />
+          <div v-for="photo in sample.photos" :key="photo.id" class="relative">
+            <a :href="`/api/files/${photo.filename}`" target="_blank" title="點擊放大">
+              <img
+                :src="`/api/files/${photo.filename}`"
+                :alt="photo.kind"
+                class="h-28 rounded-md border object-cover"
+                :class="photo.kind === 'marking' && 'ring-2 ring-warning'"
+              />
+            </a>
+            <Badge
+              v-if="photo.kind === 'marking'"
+              variant="warning"
+              class="absolute left-1 top-1"
+            >
+              標示
+            </Badge>
+          </div>
         </div>
       </div>
       <p v-if="!mi.samples?.length" class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
@@ -404,21 +535,26 @@ onMounted(async () => {
       尚未加入型號,點右上角「新增型號」開始檢驗
     </p>
 
-    <!-- 新增型號 Dialog -->
+    <!-- 新增型號 Dialog:選產品,標準/參數/預期標示自動帶出 -->
     <Dialog v-model:open="addModelOpen" title="新增型號">
       <div class="space-y-4">
         <div class="space-y-1.5">
-          <label class="text-sm font-medium">檢驗標準 <span class="text-destructive">*</span></label>
-          <Select v-model="modelForm.spec_template_id">
-            <option :value="0" disabled>請選擇</option>
-            <option v-for="spec in specs" :key="spec.id" :value="spec.id">
-              {{ spec.name }}(v{{ spec.version }})
-            </option>
+          <label class="text-sm font-medium">產品 <span class="text-destructive">*</span></label>
+          <Select v-model="modelForm.product_id">
+            <option :value="0" disabled>請選擇(類別標準與參數自動帶出)</option>
+            <optgroup
+              v-for="[category, items] in productsByCategory"
+              :key="category"
+              :label="category"
+            >
+              <option v-for="product in items" :key="product.id" :value="product.id">
+                {{ product.name }}
+              </option>
+            </optgroup>
           </Select>
-        </div>
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium">產品名稱 <span class="text-destructive">*</span></label>
-          <Input v-model="modelForm.product_name" placeholder="例:LED 防潮灯 15W 曜弧黑" />
+          <p class="text-xs text-muted-foreground">
+            找不到產品?先到「產品主檔」建立型號與參數
+          </p>
         </div>
         <div class="space-y-1.5">
           <label class="text-sm font-medium">批號</label>

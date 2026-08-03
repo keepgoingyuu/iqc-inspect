@@ -11,6 +11,7 @@ from app.database import Base, SessionLocal, engine
 from app.export.router import router as export_router
 from app.inspections.router import router as inspections_router
 from app.photos.router import router as photos_router
+from app.products.router import router as products_router
 from app.review.router import router as review_router
 from app.specs.router import router as specs_router
 
@@ -50,6 +51,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(specs_router)
+app.include_router(products_router)
 app.include_router(inspections_router)
 app.include_router(photos_router)
 app.include_router(review_router)

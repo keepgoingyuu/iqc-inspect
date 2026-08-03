@@ -40,6 +40,41 @@ class SpecTemplate(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
+class Product(Base):
+    """產品主檔:型號的固有屬性。
+
+    params:標稱參數 {nominal_power: 15, flux_min: 1350, ...},
+           套入類別標準的公式算出該型號的合格範圍。
+    expected_marking:主機板上應印的型號標示字串(審核比對的基準)。
+    認證照片(選填,不一定有)掛 ProductPhoto。
+    """
+
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), unique=True)
+    category: Mapped[str] = mapped_column(String(50))  # 對應 SpecTemplate.product_category
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    expected_marking: Mapped[str] = mapped_column(String(200), default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    cert_photos: Mapped[list["ProductPhoto"]] = relationship(
+        back_populates="product", cascade="all, delete-orphan"
+    )
+
+
+class ProductPhoto(Base):
+    __tablename__ = "product_photos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+    filename: Mapped[str] = mapped_column(String(300))
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    product: Mapped[Product] = relationship(back_populates="cert_photos")
+
+
 class InspectionSheet(Base):
     __tablename__ = "inspection_sheets"
 
@@ -65,8 +100,17 @@ class ModelInspection(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     sheet_id: Mapped[int] = mapped_column(ForeignKey("inspection_sheets.id"))
     spec_template_id: Mapped[int] = mapped_column(ForeignKey("spec_templates.id"))
+    product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), nullable=True)
     product_name: Mapped[str] = mapped_column(String(200))
     batch_code: Mapped[str] = mapped_column(String(100), default="")
+    # 建立當下的產品參數/預期標示「快照」:產品主檔日後改了,舊單判定依據不變
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    expected_marking: Mapped[str] = mapped_column(String(200), default="")
+    # 主管審核關卡:確認主機板標示與認證一致(未全數確認,後端不放行簽核)
+    marking_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    marking_confirmed_by: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
     # 型號層級的量測/勾選值:{item_key: value};value 為數值或 "OK"/"NG"
     item_values: Mapped[dict] = mapped_column(JSON, default=dict)
     # pending | pass | fail;由判定引擎寫入
@@ -108,8 +152,12 @@ class Photo(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     sample_id: Mapped[int] = mapped_column(ForeignKey("samples.id"))
-    kind: Mapped[str] = mapped_column(String(20), default="part")  # part | certified
+    # part=零件照 | marking=主機板標示照(送審必備) | certified=舊資料相容
+    kind: Mapped[str] = mapped_column(String(20), default="part")
     filename: Mapped[str] = mapped_column(String(300))
+    # OCR 提示(僅供參考,不參與判定):模型讀到的字串與比對結果
+    ocr_text: Mapped[str] = mapped_column(String(300), default="")
+    ocr_match: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     sample: Mapped[Sample] = relationship(back_populates="photos")

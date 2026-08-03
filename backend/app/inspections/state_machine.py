@@ -41,13 +41,38 @@ def transition(sheet: InspectionSheet, to_status: str) -> None:
 
     if to_status == "pending_review":
         _ensure_second_inspection_done(sheet)
+        _ensure_marking_photos(sheet)
 
     if to_status == "judged":
         for mi in sheet.model_inspections:
             if mi.result == "pending":
                 raise TransitionError(f"型號「{mi.product_name}」尚未判定")
 
+    if to_status == "approved":
+        _ensure_markings_confirmed(sheet)
+
     sheet.status = to_status
+
+
+def _ensure_marking_photos(sheet: InspectionSheet) -> None:
+    """送審關卡:每個型號至少要有一張主機板標示照,主管才有東西可比對。"""
+    for mi in sheet.model_inspections:
+        has_marking = any(
+            photo.kind == "marking" for sample in mi.samples for photo in sample.photos
+        )
+        if not has_marking:
+            raise TransitionError(
+                f"型號「{mi.product_name}」尚未上傳主機板標示照,無法送審"
+            )
+
+
+def _ensure_markings_confirmed(sheet: InspectionSheet) -> None:
+    """簽核關卡:主管必須逐型號確認「主機板標示與認證一致」才放行。"""
+    for mi in sheet.model_inspections:
+        if not mi.marking_confirmed:
+            raise TransitionError(
+                f"型號「{mi.product_name}」的主機板標示尚未經主管確認一致,無法簽核"
+            )
 
 
 def _ensure_second_inspection_done(sheet: InspectionSheet) -> None:

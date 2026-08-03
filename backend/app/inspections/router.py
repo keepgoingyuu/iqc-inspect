@@ -11,7 +11,7 @@ from app.database import get_db
 from app.inspections import schemas
 from app.inspections.judge import judge_model
 from app.inspections.state_machine import TransitionError, ensure_editable, transition
-from app.models import InspectionSheet, ModelInspection, Sample, SpecTemplate, User
+from app.models import InspectionSheet, ModelInspection, Product, Sample, SpecTemplate, User
 from app.report_import.parser import ParseError, parse_report
 
 router = APIRouter(prefix="/api", tags=["inspections"])
@@ -82,16 +82,44 @@ def add_model(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> ModelInspection:
+    """選「產品」加入檢驗單:類別現行標準 + 參數 + 預期標示自動帶出並快照。"""
     sheet = _get_sheet(db, sheet_id)
     _editable_or_409(sheet)
     if len(sheet.model_inspections) >= MAX_MODELS_PER_SHEET:
         raise HTTPException(status.HTTP_409_CONFLICT, "一張檢驗單最多三個型號")
-    if db.get(SpecTemplate, body.spec_template_id) is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "檢驗標準不存在")
-    mi = ModelInspection(sheet_id=sheet.id, **body.model_dump())
+
+    product = db.get(Product, body.product_id)
+    if product is None or not product.active:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "產品不存在或已停用")
+
+    # 取該類別「現行最新版」標準;快照後即使發新版,這張單仍指向舊版
+    spec = db.scalar(
+        select(SpecTemplate)
+        .where(SpecTemplate.product_category == product.category)
+        .order_by(SpecTemplate.version.desc())
+        .limit(1)
+    )
+    if spec is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            f"類別「{product.category}」沒有檢驗標準",
+        )
+
+    mi = ModelInspection(
+        sheet_id=sheet.id,
+        spec_template_id=spec.id,
+        product_id=product.id,
+        product_name=product.name,
+        batch_code=body.batch_code,
+        params=dict(product.params),
+        expected_marking=product.expected_marking,
+    )
     db.add(mi)
     db.flush()
-    audit.record(db, sheet.id, user.id, "add_model", {"model_id": mi.id, **body.model_dump()})
+    audit.record(
+        db, sheet.id, user.id, "add_model",
+        {"model_id": mi.id, "product_id": product.id, "spec_version": spec.version},
+    )
     db.commit()
     return mi
 

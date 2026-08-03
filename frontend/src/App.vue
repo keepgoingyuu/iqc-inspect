@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Toaster } from 'vue-sonner'
-import { ClipboardList, LogOut, Moon, ShieldCheck, Sun } from '@lucide/vue'
+import { ClipboardList, LogOut, Moon, Package, ShieldCheck, Sun } from '@lucide/vue'
 import { logout } from './client'
 import { currentUser } from './store'
 
@@ -58,6 +58,18 @@ async function onLogout() {
         >
           <ClipboardList class="size-4" />
           檢驗單
+        </router-link>
+        <router-link
+          to="/products"
+          class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          :class="
+            route.path === '/products'
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+          "
+        >
+          <Package class="size-4" />
+          產品主檔
         </router-link>
       </nav>
 

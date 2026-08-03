@@ -7,6 +7,7 @@ export const router = createRouter({
     { path: '/login', component: () => import('./views/LoginView.vue') },
     { path: '/', component: () => import('./views/SheetListView.vue') },
     { path: '/sheets/:id', component: () => import('./views/SheetDetailView.vue') },
+    { path: '/products', component: () => import('./views/ProductsView.vue') },
   ],
 })
 
