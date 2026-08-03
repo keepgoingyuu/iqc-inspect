@@ -122,42 +122,42 @@ LED 燈具進貨/出貨抽檢 · 2026-08-04
 <div class="flex items-stretch gap-1.5 pt-10">
 
 <div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
-  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">1</div>
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500 text-sm font-bold text-white">1</div>
   <div class="text-sm font-semibold">建檢驗單</div>
   <div class="mt-1 text-xs leading-snug opacity-60">選產品<br/>標準自動帶出</div>
 </div>
 <div class="flex items-center text-lg text-gray-500">›</div>
 
 <div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
-  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">2</div>
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500 text-sm font-bold text-white">2</div>
   <div class="text-sm font-semibold">匯入積分球 PDF</div>
   <div class="mt-1 text-xs leading-snug opacity-60">六項數據<br/>自動解析</div>
 </div>
 <div class="flex items-center text-lg text-gray-500">›</div>
 
 <div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
-  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">3</div>
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500 text-sm font-bold text-white">3</div>
   <div class="text-sm font-semibold">拍標示照</div>
   <div class="mt-1 text-xs leading-snug opacity-60">手機直接拍<br/>主機板特寫</div>
 </div>
 <div class="flex items-center text-lg text-gray-500">›</div>
 
 <div class="flex-1 rounded-xl border border-indigo-400/50 bg-indigo-500/10 p-3 text-center">
-  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/30 text-sm font-bold text-indigo-200">4</div>
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">4</div>
   <div class="text-sm font-semibold">系統自動判定</div>
   <div class="mt-1 text-xs leading-snug opacity-60">超標即時<br/>紅框高亮</div>
 </div>
 <div class="flex items-center text-lg text-gray-500">›</div>
 
 <div class="flex-1 rounded-xl border border-gray-500/30 bg-gray-500/5 p-3 text-center">
-  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-bold text-indigo-300">5</div>
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-indigo-500 text-sm font-bold text-white">5</div>
   <div class="text-sm font-semibold">主管審核簽核</div>
   <div class="mt-1 text-xs leading-snug opacity-60">比對標示<br/>異常已標好</div>
 </div>
 <div class="flex items-center text-lg text-gray-500">›</div>
 
 <div class="flex-1 rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-3 text-center">
-  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-emerald-500/25 text-sm font-bold text-emerald-300">6</div>
+  <div class="mx-auto mb-2 flex size-8 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">6</div>
   <div class="text-sm font-semibold">Excel 歸檔</div>
   <div class="mt-1 text-xs leading-snug opacity-60">格式同紙本<br/>結案留痕</div>
 </div>
