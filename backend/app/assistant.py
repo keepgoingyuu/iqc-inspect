@@ -12,6 +12,7 @@ import re
 
 import httpx
 from fastapi import APIRouter, Depends
+from opencc import OpenCC
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -23,7 +24,10 @@ from app.models import InspectionSheet, User
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 
-SYSTEM_PROMPT = """你是 IQC 進貨抽檢系統的 AI 助手,用繁體中文簡潔回答。
+# 保險絲:模型偶爾飄簡體,回覆一律過「簡→台灣正體(含慣用詞)」;繁體過轉換無害
+_s2twp = OpenCC("s2twp")
+
+SYSTEM_PROMPT = """你是 IQC 進貨抽檢系統的 AI 助手,一律使用台灣正體中文(繁體)簡潔回答,禁止簡體字。
 系統流程:建檢驗單(一櫃)→ 加型號(1~3個,選產品自動帶標準)→ 錄入積分球數據(PDF匯入)
 → 拍主機板標示照 → 綜合判定(超標自動高亮)→ 不合格強制二次拆檢 → 送審
 → 主管比對標示、簽核 → 匯出 Excel。判定由規則引擎完成,你不參與判定,只解讀說明。
@@ -108,7 +112,7 @@ def chat(
         )
         response.raise_for_status()
         reply = _strip_markdown(response.json()["message"]["content"].strip())
-        return {"available": True, "reply": reply}
+        return {"available": True, "reply": _s2twp.convert(reply)}
     except Exception as exc:  # noqa: BLE001 — 輔助功能:失敗不影響主流程
         logger.warning("AI 助手不可用(%s)", exc)
         return {"available": False, "reply": ""}

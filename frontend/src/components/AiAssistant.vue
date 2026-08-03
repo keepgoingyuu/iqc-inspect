@@ -29,9 +29,14 @@ const suggestions = computed(() =>
     : ['整個檢驗流程是怎麼走的?', '判定不合格之後要做什麼?', '主管審核時要確認什麼?'],
 )
 
-async function scrollToBottom() {
+// 每輪問答:把最新的 query 捲到可視區最上方(答案在下面往下長)
+async function scrollQueryToTop() {
   await nextTick()
-  listEl.value?.scrollTo({ top: listEl.value.scrollHeight, behavior: 'smooth' })
+  const container = listEl.value
+  if (!container) return
+  const queries = container.querySelectorAll<HTMLElement>('[data-role="user"]')
+  const latest = queries[queries.length - 1]
+  if (latest) container.scrollTo({ top: latest.offsetTop - 12, behavior: 'smooth' })
 }
 
 async function send(text?: string) {
@@ -40,7 +45,7 @@ async function send(text?: string) {
   input.value = ''
   messages.value.push({ role: 'user', content })
   loading.value = true
-  await scrollToBottom()
+  await scrollQueryToTop()
   try {
     const { data } = await chat({
       body: { messages: messages.value, sheet_id: sheetId.value ?? null },
@@ -56,7 +61,7 @@ async function send(text?: string) {
     messages.value.push({ role: 'assistant', content: '⚠️ 發生錯誤,請再試一次。' })
   } finally {
     loading.value = false
-    await scrollToBottom()
+    await scrollQueryToTop()
   }
 }
 </script>
@@ -111,6 +116,7 @@ async function send(text?: string) {
           v-for="(message, index) in messages"
           :key="index"
           class="flex"
+          :data-role="message.role"
           :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
         >
           <div

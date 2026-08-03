@@ -397,6 +397,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "itsdangerous" },
+    { name = "opencc" },
     { name = "openpyxl" },
     { name = "pdfplumber" },
     { name = "pydantic-settings" },
@@ -417,6 +418,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
+    { name = "opencc", specifier = ">=1.4.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pdfplumber", specifier = ">=0.11.10" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
@@ -439,6 +441,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/9c/cb/8ac0172223afbccb63986cc25049b154ecfb5e85932587206f42317be31d/itsdangerous-2.2.0.tar.gz", hash = "sha256:e0050c0b7da1eea53ffaf149c0cfbb5c6e2e2b69c4bef22c81fa6eb73e5f6173", size = 54410, upload-time = "2024-04-16T21:28:15.614Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/96/92447566d16df59b2a776c0fb82dbc4d9e07cd95062562af01e408583fc4/itsdangerous-2.2.0-py3-none-any.whl", hash = "sha256:c6242fc49e35958c8b15141343aa660db5fc54d4f13a1db01a3f5891b98700ef", size = 16234, upload-time = "2024-04-16T21:28:14.499Z" },
+]
+
+[[package]]
+name = "opencc"
+version = "1.4.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/4a/9fdb46f75751712f5c2ea76fdffe3d08f2b833301263644e1267ef82c1cd/opencc-1.4.1.tar.gz", hash = "sha256:a2c58215626ac5131c5db277766678d552fc296e9e0299ef183cb67c1a7f30e7", size = 11592892, upload-time = "2026-07-12T14:59:55.166Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/7a/27525cb0a5a402e7dc45b0852c14cb46dde614ff5955e6869d3b64b31684/opencc-1.4.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:e3b51cff5ad497376d3f04ab7902363fe9dced44646de4db2995403a25e3b017", size = 2096613, upload-time = "2026-07-12T15:04:00.333Z" },
+    { url = "https://files.pythonhosted.org/packages/96/15/0b42694b9ac218335f0dcf4a5b9757d18356fe27d19ec5e4c1872538d2ce/opencc-1.4.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:b7af1032690c00d56cf4858a62c08e6f683a8fbb14a4300bb692516fa45d4ed4", size = 2000591, upload-time = "2026-07-12T14:57:49.666Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/2f/4e981646fc6dea7438f2612608f4a6a9780c6b1c580f0d4a127c24c270a1/opencc-1.4.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:0afecd22b3963bc1ac96069a5e8c1ba3f4800708360b5a67ab8b302a0271fdc6", size = 2343323, upload-time = "2026-07-12T14:59:44.241Z" },
+    { url = "https://files.pythonhosted.org/packages/26/f0/2f34d136eaf456e4b31d5662a2d23da1e9362cab6a74825d3dbb397b5e72/opencc-1.4.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4f7fe2e9a7abd48543e332783dcc6ad2ffc9b93d98fffdd5cf9a91512ef894eb", size = 2380744, upload-time = "2026-07-12T14:59:52.08Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/98/2941f2d1be297155fcb60ccb781e3525fb3d6e5ea092f2515dc7cc2a8494/opencc-1.4.1-cp313-cp313-win_amd64.whl", hash = "sha256:f2bc683dbb0b175357a6558d2802d9a2fe158c078d0564714cf43aeb9bd42249", size = 2795565, upload-time = "2026-07-12T15:02:59.902Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/1d/e91cd67bc21149d43cdfe1fee09ca2953b8367d69c5fbc6dca1d3c5040b0/opencc-1.4.1-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:f3bf198aae95e21fe46bb2f86e2fc3e005cca02208d958ae5738aa2f1788fe07", size = 2096702, upload-time = "2026-07-12T15:04:01.506Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/bc/aeee89c1b685de276fe452880287f3afd489e8fd4393e07d52df9aed48c6/opencc-1.4.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:f148144f8710c9b436f9f6019d3448c14a0328074f354a789d0703d45288dff5", size = 2000753, upload-time = "2026-07-12T14:57:51.069Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/0d/c747e9e0c5718f968b31e079061974bad579dc5c5d4ada1237d96bcccd92/opencc-1.4.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:4088ad78f22d8d93c6ce5939ca009807a54fbe9af93a97ff53a501438a5b00a0", size = 2343499, upload-time = "2026-07-12T14:59:46.148Z" },
+    { url = "https://files.pythonhosted.org/packages/83/97/e8d9a4f08156089e285c61728a8897bc603fd295a23fd70cf5d019899c2d/opencc-1.4.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:5052ed968c2b12c3e95d4208ce3b45dd8349bf6ee6fbc54852e0512e01e7a213", size = 2380713, upload-time = "2026-07-12T14:59:53.599Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/ff/c09d908220f43a68161ae24e7283ff67b5a07824ff5f5b3b9addc0ce3120/opencc-1.4.1-cp314-cp314-win_amd64.whl", hash = "sha256:b9fbff4538682ed04cdaa12f7df84f8ac2cf23d011bd0eae5aaf5d7ae183fe42", size = 2856942, upload-time = "2026-07-12T15:03:01.213Z" },
 ]
 
 [[package]]
