@@ -2,13 +2,33 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Toaster } from 'vue-sonner'
-import { ClipboardList, LogOut, Moon, Package, ShieldCheck, Sun } from '@lucide/vue'
+import {
+  ClipboardList,
+  LogOut,
+  Moon,
+  Package,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ShieldCheck,
+  Sun,
+} from '@lucide/vue'
 import { logout } from './client'
 import { currentUser } from './store'
 
 const router = useRouter()
 const route = useRoute()
 const isDark = ref(document.documentElement.classList.contains('dark'))
+const collapsed = ref(localStorage.getItem('sidebar') === 'collapsed')
+
+const NAV_ITEMS = [
+  { to: '/', label: '檢驗單', icon: ClipboardList, match: (p: string) => p === '/' || p.startsWith('/sheets') },
+  { to: '/products', label: '產品主檔', icon: Package, match: (p: string) => p === '/products' },
+]
+
+function toggleSidebar() {
+  collapsed.value = !collapsed.value
+  localStorage.setItem('sidebar', collapsed.value ? 'collapsed' : 'expanded')
+}
 
 function toggleTheme() {
   isDark.value = !isDark.value
@@ -32,55 +52,77 @@ async function onLogout() {
   </template>
 
   <div v-else class="flex min-h-screen">
-    <!-- 側邊欄 -->
+    <!-- 側邊欄(可收合,仿 Cloudflare) -->
     <aside
-      class="fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r bg-sidebar text-sidebar-foreground"
+      class="fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-sidebar text-sidebar-foreground transition-[width] duration-200"
+      :class="collapsed ? 'w-14' : 'w-56'"
     >
-      <div class="flex items-center gap-2.5 px-5 py-5">
-        <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      <!-- 品牌列 + 收合鈕 -->
+      <div class="flex items-center gap-2.5 px-3 py-4" :class="collapsed && 'justify-center'">
+        <div
+          class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+        >
           <ShieldCheck class="size-4.5" />
         </div>
-        <div>
-          <div class="text-sm font-semibold leading-tight">IQC 進貨抽檢</div>
+        <div v-if="!collapsed" class="min-w-0 flex-1">
+          <div class="truncate text-sm font-semibold leading-tight">IQC 進貨抽檢</div>
           <div class="text-[11px] text-muted-foreground">品質檢驗系統</div>
         </div>
+        <button
+          v-if="!collapsed"
+          class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+          title="收合側邊欄"
+          @click="toggleSidebar"
+        >
+          <PanelLeftClose class="size-4" />
+        </button>
       </div>
 
-      <nav class="flex-1 space-y-1 px-3 pt-2">
-        <router-link
-          to="/"
-          class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-          :class="
-            route.path === '/' || route.path.startsWith('/sheets')
-              ? 'bg-accent text-accent-foreground'
-              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-          "
+      <!-- 收合狀態的展開鈕 -->
+      <div v-if="collapsed" class="flex justify-center pb-2">
+        <button
+          class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+          title="展開側邊欄"
+          @click="toggleSidebar"
         >
-          <ClipboardList class="size-4" />
-          檢驗單
-        </router-link>
+          <PanelLeftOpen class="size-4" />
+        </button>
+      </div>
+
+      <!-- 導覽 -->
+      <nav class="flex-1 space-y-1 px-2 pt-1">
         <router-link
-          to="/products"
-          class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-          :class="
-            route.path === '/products'
+          v-for="item in NAV_ITEMS"
+          :key="item.to"
+          :to="item.to"
+          :title="collapsed ? item.label : undefined"
+          class="flex items-center gap-2.5 rounded-md py-2 text-sm font-medium transition-colors"
+          :class="[
+            collapsed ? 'justify-center px-0' : 'px-3',
+            item.match(route.path)
               ? 'bg-accent text-accent-foreground'
-              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-          "
+              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+          ]"
         >
-          <Package class="size-4" />
-          產品主檔
+          <component :is="item.icon" class="size-4 shrink-0" />
+          <span v-if="!collapsed">{{ item.label }}</span>
         </router-link>
       </nav>
 
-      <div class="border-t px-3 py-3">
-        <div v-if="currentUser" class="flex items-center gap-2.5 px-2 py-1.5">
+      <!-- 使用者區 -->
+      <div class="border-t px-2 py-3">
+        <div
+          v-if="currentUser"
+          class="flex items-center gap-2"
+          :class="collapsed ? 'flex-col' : 'px-1'"
+        >
           <div
-            class="flex size-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold"
+            class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold"
+            :title="`${currentUser.display_name}(${currentUser.role === 'supervisor' ? '主管' : '檢驗員'})`"
           >
             {{ currentUser.display_name.slice(0, 1) }}
           </div>
-          <div class="min-w-0 flex-1">
+          <div v-if="!collapsed" class="min-w-0 flex-1">
             <div class="truncate text-sm font-medium">{{ currentUser.display_name }}</div>
             <div class="text-[11px] text-muted-foreground">
               {{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }}
@@ -106,7 +148,10 @@ async function onLogout() {
     </aside>
 
     <!-- 主內容 -->
-    <main class="ml-56 flex-1 px-8 py-6">
+    <main
+      class="flex-1 px-8 py-6 transition-[margin] duration-200"
+      :class="collapsed ? 'ml-14' : 'ml-56'"
+    >
       <router-view />
     </main>
   </div>
