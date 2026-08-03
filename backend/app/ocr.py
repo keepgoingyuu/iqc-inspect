@@ -42,6 +42,8 @@ def read_marking(image_bytes: bytes) -> str | None:
                     }
                 ],
                 "stream": False,
+                # gemma4 預設會先「思考」,讀短字串不需要:關閉以免 content 為空且更快
+                "think": False,
             },
             timeout=settings.ocr_timeout_seconds,
         )
