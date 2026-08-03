@@ -11,3 +11,6 @@ export async function loadCurrentUser(): Promise<UserOut | null> {
 }
 
 export const isSupervisor = () => currentUser.value?.role === 'supervisor'
+
+// AI 助手抽屜開關(各頁工具列的小按鈕共用)
+export const assistantOpen = ref(false)

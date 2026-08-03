@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import {
@@ -13,22 +13,35 @@ import {
   Sun,
 } from '@lucide/vue'
 import { logout } from './client'
-import { currentUser } from './store'
+import { assistantOpen, currentUser } from './store'
 import AiAssistant from './components/AiAssistant.vue'
 
 const router = useRouter()
 const route = useRoute()
 const isDark = ref(document.documentElement.classList.contains('dark'))
 const collapsed = ref(localStorage.getItem('sidebar') === 'collapsed')
-const assistantOpen = ref(false)
 const hovered = ref(false)
-// 收合時滑鼠移入 → 暫時浮出展開(不推擠內容);移開縮回
+// 收合時滑鼠移入 → 暫時展開(推擠內容);移開縮回
 const expanded = computed(() => !collapsed.value || hovered.value)
 
 const NAV_ITEMS = [
   { to: '/', label: '檢驗單', icon: ClipboardList, match: (p: string) => p === '/' || p.startsWith('/sheets') },
   { to: '/products', label: '產品主檔', icon: Package, match: (p: string) => p === '/products' },
 ]
+
+// 頂部列即時時鐘
+const now = ref(new Date())
+let clockTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  clockTimer = setInterval(() => (now.value = new Date()), 1000)
+})
+onUnmounted(() => clearInterval(clockTimer))
+const clock = computed(() =>
+  now.value.toLocaleString('zh-TW', {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }),
+)
 
 function toggleSidebar() {
   collapsed.value = !collapsed.value
@@ -51,20 +64,20 @@ async function onLogout() {
 <template>
   <Toaster rich-colors position="top-center" :theme="isDark ? 'dark' : 'light'" />
 
-  <!-- 登入頁:無側邊欄 -->
+  <!-- 登入頁:無框架 -->
   <template v-if="route.path === '/login'">
     <router-view />
   </template>
 
   <div v-else class="flex min-h-screen">
-    <!-- 側邊欄(可收合,仿 Cloudflare) -->
+    <!-- 側邊欄(可收合,hover 展開,推擠式) -->
     <aside
       class="fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-sidebar text-sidebar-foreground transition-[width] duration-200"
       :class="expanded ? 'w-56' : 'w-14'"
       @mouseenter="hovered = true"
       @mouseleave="hovered = false"
     >
-      <!-- 品牌列 + 收合/釘選鈕 -->
+      <!-- 品牌列 + 釘選鈕 -->
       <div class="flex items-center gap-2.5 px-3 py-4" :class="!expanded && 'justify-center'">
         <div
           class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
@@ -108,67 +121,63 @@ async function onLogout() {
           <component :is="item.icon" class="size-4 shrink-0" />
           <span v-if="expanded">{{ item.label }}</span>
         </router-link>
-
-        <button
-          :title="!expanded ? 'AI 助手' : undefined"
-          class="flex w-full items-center gap-2.5 rounded-md py-2 text-sm font-medium transition-colors cursor-pointer"
-          :class="[
-            !expanded ? 'justify-center px-0' : 'px-3',
-            assistantOpen
-              ? 'bg-accent text-accent-foreground'
-              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
-          ]"
-          @click="assistantOpen = !assistantOpen"
-        >
-          <Bot class="size-4 shrink-0" />
-          <span v-if="expanded">AI 助手</span>
-        </button>
       </nav>
-
-      <!-- 使用者區 -->
-      <div class="border-t px-2 py-3">
-        <div
-          v-if="currentUser"
-          class="flex items-center gap-2"
-          :class="!expanded ? 'justify-center' : 'px-1'"
-        >
-          <div
-            class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold"
-            :title="`${currentUser.display_name}(${currentUser.role === 'supervisor' ? '主管' : '檢驗員'})`"
-          >
-            {{ currentUser.display_name.slice(0, 1) }}
-          </div>
-          <template v-if="expanded">
-            <div class="min-w-0 flex-1">
-              <div class="truncate text-sm font-medium">{{ currentUser.display_name }}</div>
-              <div class="text-[11px] text-muted-foreground">
-                {{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }}
-              </div>
-            </div>
-            <button
-              class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-              title="切換主題"
-              @click="toggleTheme"
-            >
-              <Sun v-if="isDark" class="size-4" />
-              <Moon v-else class="size-4" />
-            </button>
-            <button
-              class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive cursor-pointer"
-              title="登出"
-              @click="onLogout"
-            >
-              <LogOut class="size-4" />
-            </button>
-          </template>
-        </div>
-      </div>
     </aside>
 
-    <!-- 主內容 -->
-    <!-- 推擠式:側欄/助手展開時內容跟著讓位,不被遮住 -->
+    <!-- 頂部儀表板列 -->
+    <header
+      class="fixed top-0 right-0 z-30 flex h-14 items-center gap-3 border-b bg-sidebar px-5 transition-[left,right] duration-200"
+      :class="[expanded ? 'left-56' : 'left-14', assistantOpen ? 'right-96' : 'right-0']"
+    >
+      <span class="text-sm font-semibold">
+        {{ route.path === '/products' ? '產品主檔' : '檢驗單' }}
+      </span>
+      <div class="flex-1"></div>
+
+      <button
+        class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer"
+        :class="
+          assistantOpen
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-primary/15 text-primary hover:bg-primary/25'
+        "
+        @click="assistantOpen = !assistantOpen"
+      >
+        <Bot class="size-4" />
+        AI 助手
+      </button>
+
+      <button
+        class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+        title="切換主題"
+        @click="toggleTheme"
+      >
+        <Sun v-if="isDark" class="size-4" />
+        <Moon v-else class="size-4" />
+      </button>
+
+      <span class="font-mono text-sm text-muted-foreground">{{ clock }}</span>
+
+      <span
+        v-if="currentUser"
+        class="rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success"
+      >
+        {{ currentUser.display_name }}({{ currentUser.role === 'supervisor' ? '主管' : '檢驗員' }})
+      </span>
+
+      <button
+        class="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-destructive cursor-pointer"
+        title="登出"
+        @click="onLogout"
+      >
+        <LogOut class="size-4" />
+        登出
+      </button>
+    </header>
+
+    <!-- 主內容:推擠式,左右都讓位 -->
     <main
-      class="flex-1 px-8 py-6 transition-[margin] duration-200"
+      class="flex-1 px-8 pb-6 pt-20 transition-[margin] duration-200"
       :class="[expanded ? 'ml-56' : 'ml-14', assistantOpen ? 'mr-96' : 'mr-0']"
     >
       <router-view />
