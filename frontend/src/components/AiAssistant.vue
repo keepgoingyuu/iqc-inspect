@@ -17,6 +17,8 @@ const messages = ref<Message[]>([])
 const input = ref('')
 const loading = ref(false)
 const listEl = ref<HTMLElement | null>(null)
+// 底部墊高:讓最新 query 有空間被推到可視區頂端(同 ChatGPT 做法)
+const spacerHeight = ref(0)
 
 // 在檢驗單頁時,把該單數據帶給助手當上下文
 const sheetId = computed(() =>
@@ -36,7 +38,13 @@ async function scrollQueryToTop() {
   if (!container) return
   const queries = container.querySelectorAll<HTMLElement>('[data-role="user"]')
   const latest = queries[queries.length - 1]
-  if (latest) container.scrollTo({ top: latest.offsetTop - 12, behavior: 'smooth' })
+  if (!latest) return
+  // 先墊高底部,確保有足夠捲動空間能把 query 推到頂
+  spacerHeight.value = Math.max(0, container.clientHeight - latest.offsetHeight - 96)
+  await nextTick()
+  // offsetTop 以定位祖先(aside)為基準,換算成容器內位置
+  const top = latest.offsetTop - container.offsetTop - 12
+  container.scrollTo({ top, behavior: 'smooth' })
 }
 
 async function send(text?: string) {
@@ -135,6 +143,9 @@ async function send(text?: string) {
           <span class="inline-block size-2 animate-pulse rounded-full bg-primary"></span>
           思考中…
         </div>
+
+        <!-- 底部墊高:讓最新 query 能被捲到頂 -->
+        <div :style="{ height: spacerHeight + 'px' }"></div>
       </div>
 
       <!-- 輸入區 -->
