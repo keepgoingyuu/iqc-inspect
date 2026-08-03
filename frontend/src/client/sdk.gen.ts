@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddModelData, AddModelErrors, AddModelResponses, AddSampleData, AddSampleErrors, AddSampleResponses, ApproveData, ApproveErrors, ApproveResponses, AuditTrailData, AuditTrailErrors, AuditTrailResponses, ConfirmMarkingData, ConfirmMarkingErrors, ConfirmMarkingResponses, CreateProductData, CreateProductErrors, CreateProductResponses, CreateSheetData, CreateSheetErrors, CreateSheetResponses, CreateSpecData, CreateSpecErrors, CreateSpecResponses, ExportXlsxData, ExportXlsxErrors, ExportXlsxResponses, GetFileData, GetFileErrors, GetFileResponses, GetSheetData, GetSheetErrors, GetSheetResponses, GetSpecData, GetSpecErrors, GetSpecResponses, HealthData, HealthResponses, JudgeSheetData, JudgeSheetErrors, JudgeSheetResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSheetsData, ListSheetsErrors, ListSheetsResponses, ListSpecsData, ListSpecsErrors, ListSpecsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, MeData, MeErrors, MeResponses, RejectData, RejectErrors, RejectResponses, RunOcrData, RunOcrErrors, RunOcrResponses, TransitionSheetData, TransitionSheetErrors, TransitionSheetResponses, UpdateItemValuesData, UpdateItemValuesErrors, UpdateItemValuesResponses, UpdateProductData, UpdateProductErrors, UpdateProductResponses, UpdateSampleData, UpdateSampleErrors, UpdateSampleResponses, UploadCertPhotoData, UploadCertPhotoErrors, UploadCertPhotoResponses, UploadPdfData, UploadPdfErrors, UploadPdfResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { AddModelData, AddModelErrors, AddModelResponses, AddSampleData, AddSampleErrors, AddSampleResponses, ApproveData, ApproveErrors, ApproveResponses, AuditTrailData, AuditTrailErrors, AuditTrailResponses, ChatData, ChatErrors, ChatResponses, ConfirmMarkingData, ConfirmMarkingErrors, ConfirmMarkingResponses, CreateProductData, CreateProductErrors, CreateProductResponses, CreateSheetData, CreateSheetErrors, CreateSheetResponses, CreateSpecData, CreateSpecErrors, CreateSpecResponses, ExportXlsxData, ExportXlsxErrors, ExportXlsxResponses, GetFileData, GetFileErrors, GetFileResponses, GetSheetData, GetSheetErrors, GetSheetResponses, GetSpecData, GetSpecErrors, GetSpecResponses, HealthData, HealthResponses, JudgeSheetData, JudgeSheetErrors, JudgeSheetResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSheetsData, ListSheetsErrors, ListSheetsResponses, ListSpecsData, ListSpecsErrors, ListSpecsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, MeData, MeErrors, MeResponses, RejectData, RejectErrors, RejectResponses, RunOcrData, RunOcrErrors, RunOcrResponses, TransitionSheetData, TransitionSheetErrors, TransitionSheetResponses, UpdateItemValuesData, UpdateItemValuesErrors, UpdateItemValuesResponses, UpdateProductData, UpdateProductErrors, UpdateProductResponses, UpdateSampleData, UpdateSampleErrors, UpdateSampleResponses, UploadCertPhotoData, UploadCertPhotoErrors, UploadCertPhotoResponses, UploadPdfData, UploadPdfErrors, UploadPdfResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -39,6 +39,18 @@ export const logout = <ThrowOnError extends boolean = false>(options?: Options<L
  * Me
  */
 export const me = <ThrowOnError extends boolean = false>(options?: Options<MeData, ThrowOnError>): RequestResult<MeResponses, MeErrors, ThrowOnError> => (options?.client ?? client).get<MeResponses, MeErrors, ThrowOnError>({ url: '/api/auth/me', ...options });
+
+/**
+ * Chat
+ */
+export const chat = <ThrowOnError extends boolean = false>(options: Options<ChatData, ThrowOnError>): RequestResult<ChatResponses, ChatErrors, ThrowOnError> => (options.client ?? client).post<ChatResponses, ChatErrors, ThrowOnError>({
+    url: '/api/assistant/chat',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * List Specs

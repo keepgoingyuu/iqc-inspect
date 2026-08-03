@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 
+from app.assistant import router as assistant_router
 from app.auth.router import router as auth_router
 from app.database import Base, SessionLocal, engine
 from app.export.router import router as export_router
@@ -50,6 +51,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(assistant_router)
 app.include_router(specs_router)
 app.include_router(products_router)
 app.include_router(inspections_router)

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import {
+  Bot,
   ClipboardList,
   LogOut,
   Moon,
@@ -13,11 +14,13 @@ import {
 } from '@lucide/vue'
 import { logout } from './client'
 import { currentUser } from './store'
+import AiAssistant from './components/AiAssistant.vue'
 
 const router = useRouter()
 const route = useRoute()
 const isDark = ref(document.documentElement.classList.contains('dark'))
 const collapsed = ref(localStorage.getItem('sidebar') === 'collapsed')
+const assistantOpen = ref(false)
 const hovered = ref(false)
 // 收合時滑鼠移入 → 暫時浮出展開(不推擠內容);移開縮回
 const expanded = computed(() => !collapsed.value || hovered.value)
@@ -155,5 +158,16 @@ async function onLogout() {
     >
       <router-view />
     </main>
+
+    <!-- AI 助手:右上浮動開關 + 右側抽屜 -->
+    <button
+      v-if="!assistantOpen"
+      class="fixed right-5 top-4 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg transition-transform hover:scale-105 cursor-pointer"
+      @click="assistantOpen = true"
+    >
+      <Bot class="size-4" />
+      AI 助手
+    </button>
+    <AiAssistant v-model:open="assistantOpen" />
   </div>
 </template>

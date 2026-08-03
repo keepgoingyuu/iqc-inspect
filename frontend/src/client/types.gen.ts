@@ -35,6 +35,34 @@ export type BodyUploadPhoto = {
 };
 
 /**
+ * ChatMessage
+ */
+export type ChatMessage = {
+    /**
+     * Role
+     */
+    role: string;
+    /**
+     * Content
+     */
+    content: string;
+};
+
+/**
+ * ChatRequest
+ */
+export type ChatRequest = {
+    /**
+     * Messages
+     */
+    messages: Array<ChatMessage>;
+    /**
+     * Sheet Id
+     */
+    sheet_id?: number | null;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -649,6 +677,35 @@ export type MeResponses = {
 };
 
 export type MeResponse = MeResponses[keyof MeResponses];
+
+export type ChatData = {
+    body: ChatRequest;
+    path?: never;
+    query?: never;
+    url: '/api/assistant/chat';
+};
+
+export type ChatErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChatError = ChatErrors[keyof ChatErrors];
+
+export type ChatResponses = {
+    /**
+     * Response Chat
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ChatResponse = ChatResponses[keyof ChatResponses];
 
 export type ListSpecsData = {
     body?: never;
