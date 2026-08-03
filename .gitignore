@@ -1,0 +1,28 @@
+# 環境變數 — 絕不進版控
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.pnpm-store/
+
+# 資料與上傳檔(本地執行產物)
+data/
+*.db
+*.sqlite3
+uploads/
+
+# 編輯器與系統
+.DS_Store
+.idea/
+.vscode/
