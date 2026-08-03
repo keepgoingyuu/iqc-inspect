@@ -8,7 +8,7 @@ import {
   Moon,
   Package,
   PanelLeftClose,
-  PanelLeftOpen,
+  Pin,
   ShieldCheck,
   Sun,
 } from '@lucide/vue'
@@ -76,10 +76,10 @@ async function onLogout() {
         <button
           v-if="expanded"
           class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-          :title="collapsed ? '釘選展開' : '收合側邊欄'"
+          :title="collapsed ? '釘選展開(固定不縮回)' : '收合側邊欄'"
           @click="toggleSidebar"
         >
-          <PanelLeftOpen v-if="collapsed" class="size-4" />
+          <Pin v-if="collapsed" class="size-4" />
           <PanelLeftClose v-else class="size-4" />
         </button>
       </div>
