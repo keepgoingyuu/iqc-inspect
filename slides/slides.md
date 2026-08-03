@@ -188,19 +188,23 @@ LED 燈具進貨/出貨抽檢 · 2026-08-04
 -->
 
 ---
-layout: image-right
-image: /images/list.png
-backgroundSize: contain
----
 
-# 系統實際畫面
+# 系統實際畫面:檢驗單列表
 
-**檢驗單列表**
+<div class="grid grid-cols-[1fr_1.4fr] items-center gap-10 pt-6">
+
+<div>
 
 - 一張單 = 一個貨櫃
-- 狀態一目了然:草稿 → 待審核 → 已簽核 → 已歸檔
+- 狀態一目了然:<br/>草稿 → 待審核 → 已簽核 → 已歸檔
 - QC 日期自動帶入當天
 - 手機、平板、電腦都能用<br/>(檢驗員現場拿手機操作)
+
+</div>
+
+<img src="/images/list.png" class="rounded-xl border border-gray-500/30 shadow-2xl" />
+
+</div>
 
 <!--
 右邊是系統的實際畫面,不是設計稿——這是已經在跑的系統。
@@ -252,19 +256,23 @@ backgroundSize: contain
 -->
 
 ---
-layout: image-right
-image: /images/detail.png
-backgroundSize: contain
----
 
 # 自動判定與異常高亮
 
-**取代人工計算和螢光筆**
+<div class="grid grid-cols-[1fr_1.4fr] items-center gap-10 pt-6">
+
+<div>
 
 - 合格範圍由**公式自動算**<br/>(標稱 15W → 13.5~16.5W)
 - 超標欄位**自動紅框**+說明<br/>「133.0 高於上限 100」
 - 一路帶到審核畫面和 Excel<br/>(黃底紅字,同螢光筆習慣)
 - 判定是**規則引擎**,不是 AI —<br/>同樣數據永遠同樣結果,可稽核
+
+</div>
+
+<img src="/images/detail.png" class="rounded-xl border border-gray-500/30 shadow-2xl" />
+
+</div>
 
 <!--
 第二個亮點:自動判定。
@@ -302,12 +310,12 @@ backgroundSize: contain
 -->
 
 ---
-layout: image-right
-image: /images/products.png
-backgroundSize: contain
----
 
 # 產品主檔:新型號一分鐘上線
+
+<div class="grid grid-cols-[1fr_1.4fr] items-center gap-10 pt-6">
+
+<div class="text-sm">
 
 **每個型號的「標準答案」建檔一次**
 
@@ -320,6 +328,12 @@ backgroundSize: contain
 - 檢驗標準只定義「公式」
 - 新型號**不用建新標準**,<br/>填參數就自動算出合格範圍
 - 現有 30 份標準 Excel 遷移入庫,<br/>檢法相同者可望共用(以實際盤點為準)
+
+</div>
+
+<img src="/images/products.png" class="rounded-xl border border-gray-500/30 shadow-2xl" />
+
+</div>
 
 <!--
 系統能自動判定,靠的是「產品主檔」——把每個型號的標準答案預先建檔:標稱幾瓦、光通量範圍多少、主機板上應該印什麼型號。
